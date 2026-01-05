@@ -1,0 +1,22 @@
+@use "./tailwind/tailwind";
+@use "./core/font";
+
+// =============== user ===============
+
+// component
+@use "./user/components/banner";
+@use "./user/components/product";
+@use "./user/components/emblaProduct";
+@use "./user/components/sliderRange";
+@use "./user/components/components";
+
+// page users
+@use "./user/page/home";
+@use "./user/page/detailProduct";
+@use "./user/page/collection";
+@use "./user/page/allCategories";
+
+// =============== admin ===============
+
+// =============== auth ===============
+@use "./auth/share";

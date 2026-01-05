@@ -1,0 +1,17 @@
+.embla {
+  @apply relative;
+  &:hover .btn--circle.next,
+  &:hover .btn--circle.prev {
+    @apply -translate-y-1/2 scale-[1.32] 2xl:scale-[1.38];
+  }
+  .btn--circle.next,
+  .btn--circle.prev {
+    @apply absolute top-1/2 -translate-y-1/2 z-10 will-change-transform;
+  }
+  .btn--circle.prev {
+    @apply -left-[15px];
+  }
+  .btn--circle.next {
+    @apply -right-[15px];
+  }
+}

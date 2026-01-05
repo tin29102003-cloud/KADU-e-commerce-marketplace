@@ -1,0 +1,29 @@
+.section--collectionAll {
+  .collection {
+    .category--list {
+      .item {
+        .title--parent {
+          &.active {
+            @apply text-accentColor;
+            &::before {
+              content: "\f0da";
+              @apply font-awesome font-bold text-sm;
+            }
+          }
+        }
+        //
+        .categoriesChild--list {
+          .item {
+            &.active {
+              @apply text-accentColor;
+              &::before {
+                content: "\f0da";
+                @apply font-awesome font-bold text-sm;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

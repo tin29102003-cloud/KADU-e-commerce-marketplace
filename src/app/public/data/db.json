@@ -1,0 +1,257 @@
+{
+  "product": [
+    {
+      "id": 1,
+      "ten_sp": "Sản phẩm 1",
+      "slug": "san-pham-1",
+      "img": "img1.jpg",
+      "so_luong": 100,
+      "trang_thai": 1,
+      "xuat_xu": "Việt Nam",
+      "gia_moi": 500000,
+      "gia_cu": 600000,
+      "id_user": 1,
+      "dc_dvvc": "Hà Nội",
+      "dvt": "Cái",
+      "noi_bac": 1,
+      "mo_ta": "Mô tả sản phẩm 1",
+      "id_dm": 1,
+      "sale": 1
+    },
+    {
+      "id": 2,
+      "ten_sp": "Sản phẩm 1",
+      "slug": "san-pham-1",
+      "img": "img1.jpg",
+      "so_luong": 100,
+      "trang_thai": 1,
+      "xuat_xu": "Việt Nam",
+      "gia_moi": 500000,
+      "gia_cu": 600000,
+      "id_user": 1,
+      "dc_dvvc": "Hà Nội",
+      "dvt": "Cái",
+      "noi_bac": 1,
+      "mo_ta": "Mô tả sản phẩm 1",
+      "id_dm": 1,
+      "sale": 1
+    },
+    {
+      "id": 3,
+      "ten_sp": "Sản phẩm 3",
+      "slug": "san-pham-1",
+      "img": "img1.jpg",
+      "so_luong": 100,
+      "trang_thai": 1,
+      "xuat_xu": "Việt Nam",
+      "gia_moi": 500000,
+      "gia_cu": 600000,
+      "id_user": 1,
+      "dc_dvvc": "Hà Nội",
+      "dvt": "Cái",
+      "noi_bac": 1,
+      "mo_ta": "Mô tả sản phẩm 1",
+      "id_dm": 1,
+      "sale": 0
+    },
+    {
+      "id": 4,
+      "ten_sp": "Sản phẩm 4",
+      "slug": "san-pham-1",
+      "img": "img1.jpg",
+      "so_luong": 100,
+      "trang_thai": 1,
+      "xuat_xu": "Việt Nam",
+      "gia_moi": 500000,
+      "gia_cu": 600000,
+      "id_user": 1,
+      "dc_dvvc": "Hà Nội",
+      "dvt": "Cái",
+      "noi_bac": 1,
+      "mo_ta": "Mô tả sản phẩm 1",
+      "id_dm": 1,
+      "sale": 1
+    },
+    {
+      "id": 5,
+      "ten_sp": "Sản phẩm 5",
+      "slug": "san-pham-1",
+      "img": "img1.jpg",
+      "so_luong": 100,
+      "trang_thai": 1,
+      "xuat_xu": "Việt Nam",
+      "gia_moi": 500000,
+      "gia_cu": 600000,
+      "id_user": 1,
+      "dc_dvvc": "Hà Nội",
+      "dvt": "Cái",
+      "noi_bac": 1,
+      "mo_ta": "Mô tả sản phẩm 1",
+      "id_dm": 1,
+      "sale": 1
+    },
+    {
+      "id": 6,
+      "ten_sp": "Sản phẩm 6",
+      "slug": "san-pham-1",
+      "img": "img1.jpg",
+      "so_luong": 100,
+      "trang_thai": 1,
+      "xuat_xu": "Việt Nam",
+      "gia_moi": 500000,
+      "gia_cu": 600000,
+      "id_user": 1,
+      "dc_dvvc": "Hà Nội",
+      "dvt": "Cái",
+      "noi_bac": 1,
+      "mo_ta": "Mô tả sản phẩm 1",
+      "id_dm": 1,
+      "sale": 0
+    },
+    {
+      "id": 7,
+      "ten_sp": "Sản phẩm 7",
+      "slug": "san-pham-1",
+      "img": "img1.jpg",
+      "so_luong": 100,
+      "trang_thai": 1,
+      "xuat_xu": "Việt Nam",
+      "gia_moi": 100000,
+      "gia_cu": 600000,
+      "id_user": 1,
+      "dc_dvvc": "Hà Nội",
+      "dvt": "Cái",
+      "noi_bac": 1,
+      "mo_ta": "Mô tả sản phẩm 1",
+      "id_dm": 1,
+      "sale": 1
+    }
+  ],
+  "banner": [
+    {
+      "urlImg": "/images/banner/xiaomi-15t-5g-home-0925.webp",
+      "alt": "Hình ảnh banner 1",
+      "href": "/banner-banner-xiaomi"
+    },
+    {
+      "urlImg": "/images/banner/home-app3-opensale.jpg",
+      "alt": "Hình ảnh banner 1",
+      "href": "/banner-banner-xiaomi"
+    },
+    {
+      "urlImg": "/images/banner/galaxy-s25-fe-home-0925.webp",
+      "alt": "Hình ảnh banner 1",
+      "href": "/banner-banner-xiaomi"
+    }
+  ],
+  "category": [
+    {
+      "id": 1,
+      "ten_dm": "Điện tử",
+      "img": "dien-tu.jpg",
+      "stt": 1,
+      "parent_id": 0,
+      "an_hien": 1,
+      "slug": "dien-tu"
+    },
+    {
+      "id": 2,
+      "ten_dm": "Điện thoại",
+      "img": "dien-thoai.jpg",
+      "stt": 2,
+      "parent_id": 1,
+      "an_hien": 1,
+      "slug": "dien-thoai"
+    },
+    {
+      "id": 3,
+      "ten_dm": "Phụ kiện",
+      "img": "phu-kien.jpg",
+      "stt": 3,
+      "parent_id": 1,
+      "an_hien": 1,
+      "slug": "phu-kien"
+    },
+    {
+      "id": 4,
+      "ten_dm": "Máy tính",
+      "img": "may-tinh.jpg",
+      "stt": 4,
+      "parent_id": 0,
+      "an_hien": 1,
+      "slug": "may-tinh"
+    },
+    {
+      "id": 5,
+      "ten_dm": "Laptop",
+      "img": "laptop.jpg",
+      "stt": 5,
+      "parent_id": 4,
+      "an_hien": 1,
+      "slug": "laptop"
+    },
+    {
+      "id": 6,
+      "ten_dm": "PC",
+      "img": "pc.jpg",
+      "stt": 6,
+      "parent_id": 4,
+      "an_hien": 1,
+      "slug": "pc"
+    },
+    {
+      "id": 7,
+      "ten_dm": "Thời trang",
+      "img": "thoi-trang.jpg",
+      "stt": 7,
+      "parent_id": 0,
+      "an_hien": 1,
+      "slug": "thoi-trang"
+    },
+    {
+      "id": 8,
+      "ten_dm": "Nam",
+      "img": "nam.jpg",
+      "stt": 8,
+      "parent_id": 7,
+      "an_hien": 1,
+      "slug": "nam"
+    },
+    {
+      "id": 9,
+      "ten_dm": "Nữ",
+      "img": "nu.jpg",
+      "stt": 9,
+      "parent_id": 7,
+      "an_hien": 1,
+      "slug": "nu"
+    },
+    {
+      "id": 10,
+      "ten_dm": "Trẻ em",
+      "img": "tre-em.jpg",
+      "stt": 10,
+      "parent_id": 7,
+      "an_hien": 0,
+      "slug": "tre-em"
+    },
+    {
+      "id": 11,
+      "ten_dm": "iPhone",
+      "img": "iphone.jpg",
+      "stt": 11,
+      "parent_id": 2,
+      "an_hien": 1,
+      "slug": "iphone"
+    },
+    {
+      "id": 12,
+      "ten_dm": "Tai nghe",
+      "img": "tai-nghe.jpg",
+      "stt": 12,
+      "parent_id": 3,
+      "an_hien": 1,
+      "slug": "tai-nghe"
+    }
+  ]
+}

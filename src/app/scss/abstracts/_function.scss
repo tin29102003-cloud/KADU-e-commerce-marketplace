@@ -1,0 +1,6 @@
+@function clampVw($minBreakpoint, $min, $max, $maxBreakpoint) {
+  $vw: (($max - $min) / ($maxBreakpoint - $minBreakpoint)) * 100;
+  $intercept: $min - ($vw * $minBreakpoint / 100);
+  //trả về
+  @return clamp(#{$min}, #{$vw}vw + #{$intercept}, #{$max});
+}

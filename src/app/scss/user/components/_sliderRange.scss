@@ -1,0 +1,15 @@
+.slider--range {
+  .MuiSlider-root {
+    @apply text-accentColor;
+    .MuiSlider-thumb {
+      @apply w-3 h-3;
+    }
+    .css-1xcmt9q-MuiSlider-thumb:hover {
+      box-shadow: 0px 0px 0px 5px rgba(25, 118, 210, 0.16);
+    }
+    .css-1xcmt9q-MuiSlider-thumb.Mui-focusVisible,
+    .css-1xcmt9q-MuiSlider-thumb.Mui-active {
+      box-shadow: 0px 0px 0px 8px rgba(25, 118, 210, 0.16);
+    }
+  }
+}

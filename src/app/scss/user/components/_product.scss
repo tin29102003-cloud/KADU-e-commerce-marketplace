@@ -1,0 +1,20 @@
+.product {
+  .product__infoMain {
+    .product--action {
+      .product--active__btnWishlist {
+        .heart-sharp {
+          @apply hidden;
+        }
+        &.active {
+          @apply fill-accentColor;
+          .heart-sharp {
+            @apply block;
+          }
+          .heart-outline {
+            @apply hidden;
+          }
+        }
+      }
+    }
+  }
+}

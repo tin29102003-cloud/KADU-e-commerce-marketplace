@@ -1,0 +1,11 @@
+.section--allCategories {
+  .allCategories {
+    .categoriesFilter--list {
+      & > .item {
+        &:not(:first-child) {
+          @apply pt-6 mt-6 border-t border-neutral-100;
+        }
+      }
+    }
+  }
+}

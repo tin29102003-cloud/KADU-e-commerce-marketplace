@@ -1,0 +1,50 @@
+@layer components {
+  .grid-col5 {
+    @apply grid grid-cols-2 gap-base md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5;
+  }
+  .col-5-resize {
+    @apply col-2 md:col-3 lg:col-4 xl:col-5;
+  }
+  .clip-l {
+    clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  }
+  .clip-r {
+    clip-path: polygon(50% 0, 100% 0%, 100% 100%, 50% 100%);
+  }
+  .err--form {
+    @apply text-sm font-medium text-red-600;
+  }
+
+  // custom class bootstrap
+  @for $i from 1 through 12 {
+    $width: calc(100% / 12 * #{$i});
+    .col-#{$i} {
+      flex: 0 0 $width;
+      max-width: $width;
+      padding-left: calc(theme("spacing.md") / 2);
+      padding-right: calc(theme("spacing.md") / 2);
+      @screen lg {
+        padding-left: calc(theme("spacing.lg") / 2);
+        padding-right: calc(theme("spacing.lg") / 2);
+      }
+      @screen 2xl {
+        padding-left: calc(theme("spacing.2xl") / 2);
+        padding-right: calc(theme("spacing.2xl") / 2);
+      }
+    }
+  }
+  .pagination {
+    .pagination--list {
+      .item.active {
+        @apply border-accentColor text-accentColor;
+      }
+    }
+  }
+
+  .style-inp-1 {
+    @apply flex-1 h-[38px] rounded-lg border border-neutral-200 outline-none text-base px-3 py-2;
+    &::placeholder {
+      @apply text-sm text-neutral-700;
+    }
+  }
+}

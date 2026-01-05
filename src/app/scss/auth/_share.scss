@@ -1,0 +1,22 @@
+@use "../abstracts/function" as *;
+
+.bg--authIcon {
+  background-image: url("/images/auth/bg-icon.svg");
+  background-size: cover;
+  width: clampVw(640px, 200px, 500px, 1536px);
+  height: clampVw(640px, 200px, 500px, 1536px);
+  &.icon1,
+  &.icon2 {
+    position: absolute;
+  }
+  &.icon1 {
+    right: 0;
+    top: 0;
+    transform: translate(40%, -40%);
+  }
+  &.icon2 {
+    bottom: 0;
+    left: 0;
+    transform: translate(-40%, 40%) rotate(180deg);
+  }
+}

@@ -1,0 +1,49 @@
+.section--detailPrd {
+  .detailPrd--main {
+    .detailPrd--main__info {
+      // line bên phải  meta
+      .detailPrd--meta {
+        & > :not(:last-child) {
+          @apply pr-1 border-r-[1.5px] border-neutral-150;
+        }
+        & > :not(:first-child) {
+          @apply pl-1;
+        }
+      }
+      // phần active variant
+      .blockVariant--list {
+        .blockVariant--list__item {
+          .variant--list {
+            .variant--list__item {
+              &:hover {
+                @apply border-accentColor;
+              }
+              &.active {
+                animation: scaleBtnActive 0.4s
+                  cubic-bezier(0.95, 0.935, 0, 0.93);
+                @apply border border-accentColor;
+              }
+              &.active .variant--tick {
+                @apply opacity-100 visible;
+              }
+              .variant--tick {
+                @apply transition-all-300-ease opacity-0 invisible border border-transparent;
+              }
+              @keyframes scaleBtnActive {
+                0% {
+                  @apply scale-100 opacity-100;
+                }
+                50% {
+                  @apply scale-110 opacity-20;
+                }
+                100% {
+                  @apply scale-100 opacity-100;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

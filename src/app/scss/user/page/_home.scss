@@ -1,0 +1,43 @@
+@use "../../abstracts/function" as *;
+
+.star--test {
+  @apply w-[1px] h-[1px] rounded-full absolute z-10 rotate-[135deg];
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 1)
+  );
+  transform-origin: left 50%;
+  animation-name: animateStar;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-duration: var(--duration);
+  animation-delay: var(--delay);
+}
+@keyframes animateStar {
+  0% {
+    width: 1px;
+  }
+  25% {
+    width: 100px;
+    opacity: 0.2;
+  }
+  100% {
+    width: 100px;
+    opacity: 0;
+  }
+}
+
+.section--sale {
+  @apply relative;
+  &::after,
+  &::before {
+    @apply content-[''] absolute z-[-1] block w-[200px] h-[200px] bg-accentColor/60 rounded-full blur-[120px];
+  }
+  &::after {
+    @apply bottom-[5%] right-[5%];
+  }
+  &::before {
+    @apply top-[8%] left-[12%];
+  }
+}
