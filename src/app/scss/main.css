@@ -425,6 +425,16 @@
   @apply pt-6 mt-6 border-t border-neutral-100;
 }
 
+.btn {
+  @apply transition-all-300-ease;
+}
+.btn.btn--primary {
+  @apply p-[10px_30px] rounded-lg bg-accentColor text-base text-white font-semibold select-none;
+}
+.btn.btn--primary:hover {
+  @apply bg-accentColorHover;
+}
+
 .bg--authIcon {
   background-image: url("/images/auth/bg-icon.svg");
   background-size: cover;

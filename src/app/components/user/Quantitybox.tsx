@@ -48,7 +48,7 @@ export default function QuantityBox({
       </button>
       <input
         type="text"
-        className="quantity-number text-center outline-none select-none text-inherit"
+        className="quantity-number text-center text-sm outline-none select-none text-inherit"
         value={valueQuantity}
         readOnly
         ref={quantityInpRef}

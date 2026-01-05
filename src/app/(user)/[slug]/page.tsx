@@ -175,20 +175,20 @@ export default async function DetailProduct({
               {/* product information */}
               <section className="section--descPrd section-py">
                 <TitleSection title="Thông tin sản phẩm" />
-                <div className="descPrd mt-base">
-                  {productDetail.mo_ta ? (
+                {productDetail.mo_ta?.trim() ? (
+                  <div className="descPrd mt-base">
                     <div className="descPrd-content max-w-full p-4 rounded-lg border border-bd-primary shadow-[0_0_5px_1.2px_rgba(0,0,0,0.1)]">
                       <div className="prose max-w-full">
                         {productDetail.mo_ta}
                       </div>
                     </div>
-                  ) : (
-                    <MessageBlock
-                      content="Sản phẩm hiện chưa có mô tả."
-                      className="mt-base"
-                    />
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <MessageBlock
+                    content="Sản phẩm hiện chưa có mô tả."
+                    className="mt-base"
+                  />
+                )}
               </section>
               {/* comment */}
               <section className="section--comment section-py">

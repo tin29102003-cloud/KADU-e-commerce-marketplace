@@ -1,0 +1,9 @@
+.btn {
+  @apply transition-all-300-ease;
+  &.btn--primary {
+    @apply p-[10px_30px] rounded-lg bg-accentColor text-base text-white font-semibold  select-none;
+    &:hover {
+      @apply bg-accentColorHover;
+    }
+  }
+}

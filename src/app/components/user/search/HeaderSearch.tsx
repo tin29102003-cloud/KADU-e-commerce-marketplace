@@ -3,16 +3,18 @@ import productServices from "@/app/services/productServices";
 import { ApiError, TypeProduct } from "@/app/types/type";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 import { CiSearch } from "react-icons/ci";
 import ImgLazy from "../../shared/Imglazy";
 import { formatMoney } from "@/app/utils/helper";
 import Spinner from "../../shared/Spinner";
+import BtnPrimary from "../button/BtnPrimary";
 
 // interface
 export default function HeaderSearch() {
   const router = useRouter();
+  const pathName = usePathname();
   const [keyword, setKeyword] = useState<string>("");
   const [dataSearch, setDataSearch] = useState<TypeProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -42,16 +44,20 @@ export default function HeaderSearch() {
 
     return () => clearTimeout(debounce);
   }, [keyword]);
-  const showDropdown = keyword.trim() !== "" || loading;
 
   const handleSearchNextPage = () => {
     if (!keyword.trim()) return;
-    setLoading(false);
-    setDataSearch([]);
-    setKeyword("");
     router.push(`/search?query=${keyword}`);
   };
 
+  // reset search khi next page
+  useEffect(() => {
+    setLoading(false);
+    setDataSearch([]);
+    setKeyword("");
+  }, [pathName]);
+
+  const showDropdown = keyword.trim() !== "" || loading;
   return (
     <>
       <div className="w-full relative">
@@ -84,8 +90,8 @@ export default function HeaderSearch() {
           {!loading && dataSearch.length > 0 && (
             // result product
             <>
-              <ul className="searchPrd--list">
-                {dataSearch.slice(0, 5).map((item) => (
+              <ul className="searchPrd--list flex flex-col gap-y-2">
+                {dataSearch.slice(0, 4).map((item) => (
                   <li key={item.id} className="item flex-y-center gap-x-3">
                     <div className="block--img flex-[0_0_12%]">
                       <Link href="#!" className="block w-full h-full">
@@ -119,7 +125,11 @@ export default function HeaderSearch() {
                   </li>
                 ))}
               </ul>
-              <Link href={`/search?query=`}></Link>
+              <BtnPrimary
+                content={`Xem thêm ${dataSearch.length - 4} kết quả`}
+                onClick={handleSearchNextPage}
+                className="w-full text-center mt-3"
+              />
             </>
           )}
           {!loading && dataSearch.length === 0 && (

@@ -43,7 +43,7 @@ export default function DetailProductMain({
   const [da_ban, setDa_ban] = useState<Number>(0);
   //   quantity
   const [quantity, setQuantity] = useState<number>(1);
-
+  console.log(product);
   useEffect(() => {
     if (product?.san_pham_bien_the?.length > 0) {
       setIdVariant(Number(product.san_pham_bien_the[0].id));
@@ -62,7 +62,6 @@ export default function DetailProductMain({
       setGia_da_giam(Number(objGia.gia_da_giam) * quantity);
       setGia(Number(objGia.gia) * quantity);
       setTon_kho(objGia.so_luong);
-      // setDa_ban(objGia.)
     } else {
       setGia_da_giam(Number(product.gia_da_giam) * quantity);
       setGia(Number(product.gia) * quantity);
@@ -92,7 +91,6 @@ export default function DetailProductMain({
       toast.error("Có lỗi xãy ra khi thêm!");
       return;
     }
-
     const dataPost: TypePostProduct = {
       id_sp,
       id_bt: idVariant,
@@ -104,6 +102,7 @@ export default function DetailProductMain({
     if (!infoUser) {
       addToCartLocal(dataPost);
       toast.success("Đã thêm vào giỏ hàng.");
+      return;
     }
     // post
     try {
@@ -195,11 +194,13 @@ export default function DetailProductMain({
             <div className="block--price p-[12px_16px] rounded-lg bg-primaryColor border border-bd-f5 mt-5">
               <div className="price flex items-end flex-wrap gap-3">
                 <span className="price__new title-32 font-semibold text-accentColor">
-                  {formatMoney(gia_da_giam)}
+                  {gia_da_giam ? formatMoney(gia_da_giam) : formatMoney(gia)}
                 </span>
-                <span className="price__old text-[15px] text-price-old font-medium line-through">
-                  {formatMoney(gia)}
-                </span>
+                {gia_da_giam && (
+                  <span className="price__old text-[15px] text-price-old font-medium line-through">
+                    {formatMoney(gia)}
+                  </span>
+                )}
               </div>
               <div className="price--saving mt-3 text-sm">
                 <span className="price--saving__content mr-[6px]">
@@ -210,7 +211,7 @@ export default function DetailProductMain({
                 </span>
               </div>
             </div>
-            <div className="detailprd--ship text-sm flex items-center gap-x-4 mt-5">
+            {/* <div className="detailprd--ship text-sm flex items-center gap-x-4 mt-5">
               <span className="ship__title text-neutral-500">Vận chuyển</span>
               <div className="ship--main flex-y-center gap-x-2">
                 <LiaShippingFastSolid className="w-5 h-5 fill-[#26AA99]" />
@@ -219,7 +220,7 @@ export default function DetailProductMain({
                   <IoIosArrowForward className="w-4 h-4 mb-[2px] fill-[#4E4E4E]" />
                 </div>
               </div>
-            </div>
+            </div> */}
             {product.san_pham_bien_the &&
               product.san_pham_bien_the.length > 0 && (
                 <div className="blockVariant--list flex flex-col gap-y-3 mt-5">

@@ -17,7 +17,7 @@ export default function BtnPrimary({
     <button
       {...props}
       className={clsx(
-        "p-[10px_30px] rounded-lg bg-accentColor text-base text-white font-semibold transition-all-300-ease select-none hover:bg-accentColorHover",
+        "btn btn--primary",
         children && "flex items-center gap-x-2",
         className
       )}
