@@ -31,7 +31,6 @@ export const formatDateVN = (
   options?: Intl.DateTimeFormatOptions
 ) => {
   if (!dateStr) return "";
-
   const defaultOptions: Intl.DateTimeFormatOptions = {
     timeZone: "Asia/Ho_Chi_Minh",
     day: "2-digit",

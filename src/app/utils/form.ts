@@ -19,7 +19,6 @@ export function validatorEmail(
 }
 
 // email + phone
-
 export function validatorEmailAndPhone(
   valueForm: string,
   onErr: (errMsg: string) => void
@@ -69,7 +68,6 @@ export function validatorPhone(phone: string, onErr: (errMsg: string) => void) {
     return false;
   } else if (validator.isMobilePhone(val, "vi-VN")) {
     onErr("");
-    onErr("");
     return true;
   } else {
     onErr("Số điện thoại không hợp lệ");
@@ -112,7 +110,6 @@ export function validatorString(
     onErr("Chỉ được chứa chữ cái");
     return false;
   }
-
   // hợp lệ
   onErr("");
   return true;

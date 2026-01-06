@@ -92,7 +92,8 @@ export default function Product({
           >
             <div className="ratio-box-img transition-all-300-ease group-hover:scale-105">
               <ImgLazy
-                src={"http://localhost:5000/" + product.img}
+                src={product.img}
+                connectHost={true}
                 alt="Sản phẩm 1"
                 className="ratio-img"
                 wrapperClassName="w-full h-full"
