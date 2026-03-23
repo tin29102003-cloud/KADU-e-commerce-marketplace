@@ -1,0 +1,39 @@
+{
+  "sidebarItems": [
+    {
+      "name": "Tổng quan",
+      "href": "/dashboard",
+      "icon": "DollarSign"
+    },
+    {
+      "name": "Sản phẩm",
+      "href": "/products",
+      "icon": "ShoppingBag"
+    },
+    {
+      "name": "Người dùng",
+      "href": "/users",
+      "icon": "Users"
+    },
+    {
+      "name": "Đơn hàng",
+      "href": "/orders",
+      "icon": "ShoppingCart"
+    },
+    {
+      "name": "Cài đặt",
+      "href": "/settings",
+      "icon": "Settings"
+    },
+    {
+      "name": "Thông báo",
+      "href": "/notifications",
+      "icon": "Bell"
+    },
+    {
+      "name": "Trợ giúp",
+      "href": "/help",
+      "icon": "Info"
+    }
+  ]
+}
