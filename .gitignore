@@ -1,0 +1,76 @@
+# =========================
+# Node.js
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# =========================
+# TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# .NET
+# =========================
+bin/
+obj/
+*.user
+*.lock.json
+
+# =========================
+# Database
+# =========================
+*.sqlite
+*.db
+
+# =========================
+# Uploads / temp
+# =========================
+uploads/
+tmp/
+temp/
+
+# =========================
+# Testing
+# =========================
+coverage/
+
+# =========================
+# Misc
+# =========================
+*.zip
+*.tar
+*.gz
+logs-error/
+logs/
+git checkout -b feature/ten-task

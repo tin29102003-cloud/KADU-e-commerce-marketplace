@@ -1,0 +1,433 @@
+openapi: 3.0.0
+info:
+  title: KADU Shop Auth API
+  version: 1.0.0
+  description: API documentation cho module Authentication và 2FA
+tags:
+  - name: Auth
+    description: Các API Đăng nhập, Đăng ký, Quên mật khẩu
+  - name: OAuth
+    description: Các API đăng nhập bên thứ 3 (Google, Facebook)
+  - name: 2FA
+    description: Các API cài đặt và xác thực 2 bước
+  - name: User
+    description: Cập nhật thông tin cá nhân và PIN
+
+paths:
+  /api/dang-nhap:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập cho người dùng
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginBody'
+      responses:
+        '200':
+          description: Đăng nhập thành công (trả về token hoặc yêu cầu 2FA)
+        '400':
+          description: Lỗi đầu vào
+        '401':
+          description: Sai tài khoản hoặc mật khẩu
+        '404':
+          description: Tài khoản không tồn tại
+        '423':
+          description: Tài khoản bị khóa hoặc chưa xác thực email
+
+  /api/login:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập dành cho Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginBody'
+      responses:
+        '200':
+          description: Đăng nhập thành công
+        '403':
+          description: Không có quyền truy cập (không phải Admin)
+
+  /api/dang-ky:
+    post:
+      tags: [Auth]
+      summary: Đăng ký tài khoản mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterBody'
+      responses:
+        '200':
+          description: Đăng ký thành công, gửi email xác thực
+        '400':
+          description: Dữ liệu không hợp lệ
+        '409':
+          description: Tài khoản hoặc email đã tồn tại
+
+  /xac-thuc-dang-ky:
+    get:
+      tags: [Auth]
+      summary: Xác thực email đăng ký
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: HTML Xác thực thành công
+        '400':
+          description: HTML Liên kết không hợp lệ hoặc thiếu tham số
+        
+
+  /api/gui-lai-xac-thuc-dk:
+    post:
+      tags: [Auth]
+      summary: Gửi lại email xác thực đăng ký
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Đã gửi lại thư xác thực
+        '400':
+          description: Đã xác thực từ trước hoặc thiếu email
+
+  /api/quen-pass:
+    post:
+      tags: [Auth]
+      summary: Gửi OTP quên mật khẩu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Đã gửi OTP qua mail (kèm Set-Cookie _usrE)
+
+  /api/xac-thuc-otp-doi-pass:
+    post:
+      tags: [Auth]
+      summary: Xác thực OTP và đặt mật khẩu mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                otp:
+                  type: string
+                mat_khau_moi:
+                  type: string
+                mat_khau_nhap_lai:
+                  type: string
+      responses:
+        '200':
+          description: Đổi mật khẩu thành công
+
+  /api/doi-pass:
+    post:
+      tags: [Auth]
+      summary: Đổi mật khẩu khi đang đăng nhập
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mat_khau_cu:
+                  type: string
+                mat_khau_moi:
+                  type: string
+                mat_khau_nhap_lai:
+                  type: string
+      responses:
+        '200':
+          description: Đổi mật khẩu thành công
+
+  /api/dang-nhap-nhanh:
+    post:
+      tags: [Auth]
+      summary: Yêu cầu gửi link đăng nhập nhanh qua email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Đã gửi link đăng nhập nhanh
+
+  /api/xac-thuc-dang-nhap-nhanh:
+    get:
+      tags: [Auth]
+      summary: Xử lý link đăng nhập nhanh
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect về trang chủ kèm theo Cookies đăng nhập
+
+  /api/auth/profile:
+    get:
+      tags: [User]
+      summary: Lấy thông tin user hiện tại (Me)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Trả về thông tin an toàn của user
+
+  /api/auth/google:
+    get:
+      tags: [OAuth]
+      summary: Redirect sang Google Auth
+
+  /api/auth/google/callback:
+    get:
+      tags: [OAuth]
+      summary: Callback xử lý sau khi Google Auth thành công
+      responses:
+        '200':
+          description: HTML postMessage gửi dữ liệu về client
+
+  /api/auth/facebook:
+    get:
+      tags: [OAuth]
+      summary: Redirect sang Facebook Auth
+
+  /api/auth/facebook/callback:
+    get:
+      tags: [OAuth]
+      summary: Callback xử lý sau khi Facebook Auth thành công
+      responses:
+        '200':
+          description: HTML postMessage gửi dữ liệu về client
+
+  /api/refresh-token:
+    post:
+      tags: [Auth]
+      summary: Cấp lại Access Token mới dựa trên Refresh Token (từ Cookie)
+      responses:
+        '200':
+          description: Cấp lại token thành công
+
+  /api/logout:
+    post:
+      tags: [Auth]
+      summary: Đăng xuất và xóa Cookie
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Đăng xuất thành công
+
+  /api/update-pin:
+    put:
+      tags: [User]
+      summary: Cập nhật mã PIN bảo vệ tin nhắn
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ma_pin_moi:
+                  type: string
+      responses:
+        '200':
+          description: Thiết lập mã PIN thành công
+
+  /api/2fa/setup:
+    post:
+      tags: [2FA]
+      summary: Lấy QR Code và Secret để cài đặt 2FA
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mat_khau:
+                  type: string
+      responses:
+        '200':
+          description: Trả về QR Code dạng base64 và secret text
+
+  /api/2fa/turn-on:
+    post:
+      tags: [2FA]
+      summary: Kích hoạt 2FA sau khi quét mã QR
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Verify2FABody'
+      responses:
+        '200':
+          description: Bật 2FA thành công
+
+  /api/2fa/turn-off:
+    post:
+      tags: [2FA]
+      summary: Tắt 2FA (yêu cầu mã 2FA hiện tại)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Verify2FABody'
+      responses:
+        '200':
+          description: Tắt 2FA thành công
+
+  /api/2fa/disable/email:
+    post:
+      tags: [2FA]
+      summary: Gửi OTP vào email để yêu cầu tắt 2FA khi mất ứng dụng
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Đã gửi OTP qua mail
+
+  /api/2fa/disable/email/verify:
+    post:
+      tags: [2FA]
+      summary: Xác thực OTP để tiến hành tắt 2FA khẩn cấp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                otp:
+                  type: string
+      responses:
+        '200':
+          description: Tắt 2FA khẩn cấp thành công
+
+  /api/2fa/verification:
+    post:
+      tags: [2FA]
+      summary: Nhập mã 2FA trong quá trình đăng nhập
+      security:
+        - bearerAuth: [] # Yêu cầu tempToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Verify2FABody'
+      responses:
+        '200':
+          description: Xác thực 2 bước thành công, cấp Access Token
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginBody:
+      type: object
+      required:
+        - tai_khoan
+        - mat_khau
+      properties:
+        tai_khoan:
+          type: string
+          example: "nguyenvana / email@gmail.com"
+        mat_khau:
+          type: string
+          example: "Password123!"
+
+    RegisterBody:
+      type: object
+      required:
+        - tai_khoan
+        - email
+        - mat_khau
+        - mat_khau_nhap_lai
+        - dien_thoai
+      properties:
+        tai_khoan:
+          type: string
+        email:
+          type: string
+        mat_khau:
+          type: string
+        mat_khau_nhap_lai:
+          type: string
+        dien_thoai:
+          type: string
+
+    Verify2FABody:
+      type: object
+      required:
+        - ma_bao_ve
+      properties:
+        ma_bao_ve:
+          type: string
+          description: Mã 6 số từ Google Authenticator

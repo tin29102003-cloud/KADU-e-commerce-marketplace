@@ -1,0 +1,3548 @@
+{
+  "info": {
+    "_postman_id": "70b0854d-72b0-42ad-b8dd-638636dd7fba",
+    "name": "datn",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "45491989"
+  },
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "dang nhap",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"tai_khoan\":\"admin\",\r\n    \"mat_khau\": \"0811994@Kbc\"\r\n  \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/dang-nhap",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "dang-nhap"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "refresh token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"tai_khoan\":\"admin\",\r\n    \"mat_khau\": \"0811994@Kbc\"\r\n  \r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/refresh-token",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "refresh-token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "dang nhap admin",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"tai_khoan\":\"admin\",\r\n    \"mat_khau\": \"0811994@Kbc\"\r\n  \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "dang ky",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"tai_khoan\":\"test1233\",\r\n    \"email\": \"n19kbc@gmail.com\",\r\n    \"mat_khau\": \"08111994!Kbc\",\r\n    \"mat_khau_nhap_lai\": \"08111994!Kbc\",\r\n    \"dien_thoai\": \"0906986565\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/dang-ky",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "dang-ky"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "gui lai xac thuc tai khoan",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"test123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/gui-lai-xac-thuc-dk",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "gui-lai-xac-thuc-dk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xac thực đăng ký tài khoản",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/xac-thuc-dang-ky?email=test123&token=2c9423d2593eb98e128b4c0d78b5e19e05956028cd9745fd982f4fab0d8ad618",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "xac-thuc-dang-ky"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "test123"
+                },
+                {
+                  "key": "token",
+                  "value": "2c9423d2593eb98e128b4c0d78b5e19e05956028cd9745fd982f4fab0d8ad618"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "quen pass",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"n19kbc@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/quen-pass",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "quen-pass"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "quen pass  otp",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"otp\": \"\",\r\n    \"mat_khau_moi\":\"\",\r\n    \"mat_khau_nhap_lai\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/xac-thuc-otp-doi-pass",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "xac-thuc-otp-doi-pass"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "doi pass",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"mat_khau_cu\":\"\",\r\n    \"mat_khau_moi\": \"\",\r\n    \"mat_khau_nhap_lai\": \"\"\r\n    \r\n  \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/doi-pass",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "doi-pass"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "dang-nhap-nhanh",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\":\"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/dang-nhap-nhanh",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "dang-nhap-nhanh"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xac thuc dang nhap nhanh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/xac-thuc-dang-nhap-nhanh?email=fdgd&token=fdfgdfgd",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "xac-thuc-dang-nhap-nhanh"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "fdgd"
+                },
+                {
+                  "key": "token",
+                  "value": "fdfgdfgd"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy thông tin user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/auth/profile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "auth",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/logout",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"tai_khoan\":\"admin\",\r\n    \"mat_khau\": \"0811994@Kbc\"\r\n  \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://minta-subturriculated-undomestically.ngrok-free.dev/api/dang-nhap",
+              "protocol": "https",
+              "host": [
+                "minta-subturriculated-undomestically",
+                "ngrok-free",
+                "dev"
+              ],
+              "path": [
+                "api",
+                "dang-nhap"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "site",
+      "item": [
+        {
+          "name": "lấy sản phẩm theo dm kết hợp loc",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/danh-muc-san-pham/filter/dien-thoai--phu-kien?sort=price_desc&min_price=&max_price=&id_ths=10,12&rating=",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "danh-muc-san-pham",
+                "filter",
+                "dien-thoai--phu-kien"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "price_desc"
+                },
+                {
+                  "key": "note về sort",
+                  "value": "thang cu sort này  có các gia trị price_asc' | 'price_desc' | 'newest' | 'bestseller' | 'popular'",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "min_price",
+                  "value": ""
+                },
+                {
+                  "key": "max_price",
+                  "value": ""
+                },
+                {
+                  "key": "id_ths",
+                  "value": "10,12"
+                },
+                {
+                  "key": "rating",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "san pham site",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/san-pham",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "san-pham"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "san-pham-noi-bat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/san-pham-noi-bat",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "san-pham-noi-bat"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "danh muc phan cap",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/danh-muc-phan-cap",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "danh-muc-phan-cap"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xem sanr pham cua shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"93\", \"so_luong\": \"50\", \"id_bt\": \"\" },\r\n        { \"id_sp\": \"94\", \"so_luong\": \"10\", \"id_bt\": \"82\" }\r\n    ],\r\n    \"id_km\": \"1\",\r\n    \"id_dia_chi\": \"18\",\r\n    \"id_pttt\": \"4\",\r\n    \"ghi_chu\": \"hàng giao cần thận\"\r\n}//note là cái này là từ phần giỏ hang qua đơn hàng để dh nó hiện lên review trước\r\n"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/san-pham",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "san-pham"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thương hiệu dropdown dùng để khi tạo sản phảm lấy id_th",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/thuong-hieu-san-pham/select",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "thuong-hieu-san-pham",
+                "select"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "san pham sale",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/san-pham-sale",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "san-pham-sale"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "danh muc parent",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/danh-muc-parent",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "danh-muc-parent"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "tim kiem goi y",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/tim-kiem-goi-y-san-pham?keyword=Điện thoại",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "tim-kiem-goi-y-san-pham"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "Điện thoại"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "tim kiem toan bộ sản phẩm kèm phân trang",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/tim-kiem-san-pham?keyword=Điện thoại",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "tim-kiem-san-pham"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "Điện thoại"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy vouccher",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/voucher",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "voucher"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "danh-muc-tin",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/danh-muc-tin",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "danh-muc-tin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy tin tức theo danh  mục tin",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/danh-muc-tin/17",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "danh-muc-tin",
+                "17"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy tin tức theo id",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/tin-tuc/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "tin-tuc",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy banner theo  vị trí",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/banner?vi_tri=popup",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "banner"
+              ],
+              "query": [
+                {
+                  "key": "vi_tri",
+                  "value": "popup"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy banner cho trang chủ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/banner/all-grouped",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "banner",
+                "all-grouped"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy pttt",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/PTTT",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "PTTT"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "hiện ds cart khi  chưa  đăng nhập",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"94\", \"id_bt\": \"83\" , \"so_luong\": \"2\"},\r\n        { \"id_sp\": \"95\", \"id_bt\": null , \"so_luong\": \"2\"}\r\n    ]\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/san-pham-merge",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "san-pham-merge"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "site user",
+      "item": [
+        {
+          "name": "lấy thông tin tài khaonr",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/lay-thong-tin-tk",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "lay-thong-tin-tk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "cap nhật thông tin tài khoản",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "dien_thoai",
+                  "value": "0906986565",
+                  "type": "text",
+                  "uuid": "0c107197-3b39-4526-ae18-913849eff3d7"
+                },
+                {
+                  "key": "ho_ten",
+                  "value": "admin",
+                  "type": "text",
+                  "uuid": "db7eee42-f4c6-4ff3-9c32-8146cb07c0cf"
+                },
+                {
+                  "key": "hinh_user",
+                  "type": "file",
+                  "uuid": "453e1f06-c834-47e8-8b1a-9904696d45a3",
+                  "src": "/C:/Users/Victus/OneDrive/Pictures/z5319349574894_f1e7f550adc9e30add8c20cb14473022.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/cap-nhat-thong-tin-tk",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "cap-nhat-thong-tin-tk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "dia_chi (thêm xóa sửa địa chỉ)",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ho_ten\":\"tin truong 24\",\r\n    \"dien_thoai\": \"0906986566\",\r\n    \"dia_chi\": \"246/28a11a\",\r\n    \"tinh\": \"72\",\r\n    \"quan\": \"711\",\r\n    \"phuong\": \"25705\",\r\n    \"mac_dinh\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/dia-chi",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "dia-chi"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "yeu_thich-sp(xem ds yt và delete)",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_sp\":\"78\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/yeu-thich-sp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "yeu-thich-sp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thêm yêu  thích sp dạng click",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_sp\":\"4\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/yeu-thich-sp/toggle",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "yeu-thich-sp",
+                "toggle"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thêm yêu  thích tin dạng click",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_tin\":\"4\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/yeu-thich-tin/toggle",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "yeu-thich-tin",
+                "toggle"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xem gh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/get-cart",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "get-cart"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "yeu thich tin(xem ds yt và delete",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_tin\":\"4\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/yeu-thich-tin",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "yeu-thich-tin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "danh gia(thêm đánh giá và xem dánh giá của 1 sản phẩm",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "id_sp",
+                  "value": "92",
+                  "type": "text",
+                  "uuid": "a0b09d8c-d8ba-4af6-bca9-1397dfdab4b0"
+                },
+                {
+                  "key": "noi_dung",
+                  "value": "fdgdfgdfgdf",
+                  "type": "text",
+                  "uuid": "2be2d5d3-a8f2-4ce7-8ea2-f88909252f29"
+                },
+                {
+                  "key": "so_sao",
+                  "value": "5",
+                  "type": "text",
+                  "uuid": "8853b696-66a0-415c-8e74-2462f3d28101"
+                },
+                {
+                  "key": "tinh_nang",
+                  "value": "sản phẩm rất tốt",
+                  "type": "text",
+                  "uuid": "511f578b-a448-4bbc-809e-1b81fb26c2c6"
+                },
+                {
+                  "key": "chat_luong",
+                  "value": "100/100",
+                  "type": "text",
+                  "uuid": "e9634fc6-577b-4649-9067-63ebf3ef6953"
+                },
+                {
+                  "key": "hinh_dg",
+                  "type": "file",
+                  "uuid": "08a289e5-da77-409a-8c99-8cdb5ec20dbc",
+                  "src": [
+                    "/C:/Users/Public/Downloads/z7330921254672_35d57e19be128fcc38aab4bea372bbf1.jpg",
+                    "/C:/Users/Public/Downloads/z7330921253366_7a88b13d6e4e9d7d33ce1de375c8e7f3.jpg"
+                  ]
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/danh-gia",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "danh-gia"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xem lịch sử dơn hang của user",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"93\", \"so_luong\": \"50\", \"id_bt\": \"\" },\r\n        { \"id_sp\": \"94\", \"so_luong\": \"10\", \"id_bt\": \"82\" }\r\n    ],\r\n    \"id_km\": \"1\",\r\n    \"id_dia_chi\": \"18\",\r\n    \"id_pttt\": \"4\",\r\n    \"ghi_chu\": \"hàng giao cần thận\"\r\n}//note là cái này là từ phần giỏ hang qua đơn hàng để dh nó hiện lên review trước\r\n"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/don-hang/lich-su?trang_thai=0",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "don-hang",
+                "lich-su"
+              ],
+              "query": [
+                {
+                  "key": "trang_thai",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xem chi tiết đơn hàng của user",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"93\", \"so_luong\": \"50\", \"id_bt\": \"\" },\r\n        { \"id_sp\": \"94\", \"so_luong\": \"10\", \"id_bt\": \"82\" }\r\n    ],\r\n    \"id_km\": \"1\",\r\n    \"id_dia_chi\": \"18\",\r\n    \"id_pttt\": \"4\",\r\n    \"ghi_chu\": \"hàng giao cần thận\"\r\n}//note là cái này là từ phần giỏ hang qua đơn hàng để dh nó hiện lên review trước\r\n"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/don-hang/lich-su/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "don-hang",
+                "lich-su",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "add gio hang",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_sp\":\"102\",\r\n    \"id_bt\":null,\r\n    \"so_luong\": \"1\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/add-to-cart",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "add-to-cart"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update gio hang",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_luong\": \"200\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/update-cart/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "update-cart",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xoa hết giỏ hàng",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/delete-all-cart",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "delete-all-cart"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "add một mảng cart khi user vừa  đăng nhập",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"94\", \"id_bt\": null , \"so_luong\": \"2\"},\r\n        { \"id_sp\": \"95\", \"id_bt\": null , \"so_luong\": \"2\"}\r\n    ]\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/add-to-cart/merge",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "add-to-cart",
+                "merge"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xoa một sản phẩm khổi giỏ hàng",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/delete-cart/14",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "delete-cart",
+                "14"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xem truoc don hang",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"93\", \"so_luong\": \"50\", \"id_bt\": null },\r\n        { \"id_sp\": \"94\", \"so_luong\": \"10\", \"id_bt\": \"83\" }\r\n    ],\r\n    \"id_km\": \"0\"\r\n}//note là cái này là từ phần giỏ hang qua đơn hàng để dh nó hiện lên review trước\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/xem-truoc-don-hang",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "xem-truoc-don-hang"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "dat hang",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"93\", \"so_luong\": \"1\", \"id_bt\": \"\" },\r\n        { \"id_sp\": \"94\", \"so_luong\": \"1\", \"id_bt\": \"82\" }\r\n    ],\r\n    \"id_km\": \"1\",\r\n    \"id_dia_chi\": \"18\",\r\n    \"id_pttt\": \"4\",\r\n    \"ghi_chu\": \"hàng giao cần thận\"\r\n}//note là cái này là từ phần giỏ hang qua đơn hàng để dh nó hiện lên review trước\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/tao-don-hang",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "tao-don-hang"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "hủy đơn hàng người dùng",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ly_do\": \"hàng không đúng chất lượng\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/don-hang/huy/19",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "don-hang",
+                "huy",
+                "19"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thanh toán(lưu ý  dùng ngrok  mới cchayj đc api  này)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_dh\":\"20\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://minta-subturriculated-undomestically.ngrok-free.dev/api/site/created-payment-link",
+              "protocol": "https",
+              "host": [
+                "minta-subturriculated-undomestically",
+                "ngrok-free",
+                "dev"
+              ],
+              "path": [
+                "api",
+                "site",
+                "created-payment-link"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "api huy thanh toán khi user hủy trên công payos",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"93\", \"so_luong\": \"1\", \"id_bt\": \"\" },\r\n        { \"id_sp\": \"94\", \"so_luong\": \"1\", \"id_bt\": \"82\" }\r\n    ],\r\n    \"id_km\": \"1\",\r\n    \"id_dia_chi\": \"18\",\r\n    \"id_pttt\": \"4\",\r\n    \"ghi_chu\": \"hàng giao cần thận\"\r\n}//note là cái này là từ phần giỏ hang qua đơn hàng để dh nó hiện lên review trước\r\n"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/thanh-toan/huy-giao-dich/19",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "thanh-toan",
+                "huy-giao-dich",
+                "19"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "api check trang thái thanh toán sẽ gọi api này liên tục để biết đã xử lý xong chưa thuong thì pay qs có độ trễ",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ly_do\": \"hàng không đúng chất lượng\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/thanh-toan/check-status/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "thanh-toan",
+                "check-status",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "dang-ky-shop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ten_shop\": \"Shop Cid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/dang-ky-shop",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "dang-ky-shop"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "cart toggle",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id_gh_ct\": [5,6],\r\n    \"da_chon\": \"1\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/cart/toggle",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "cart",
+                "toggle"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "dia-chi-mac-dinh",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ho_ten\":\"tin truong 24\",\r\n    \"dien_thoai\": \"0906986566\",\r\n    \"dia_chi\": \"246/28a11a\",\r\n    \"tinh\": \"72\",\r\n    \"quan\": \"711\",\r\n    \"phuong\": \"25705\",\r\n    \"mac_dinh\": true\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/dia-chi-mac-dinh/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "dia-chi-mac-dinh",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "set dia chi mac dinh",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/dia-chi-mac-dinh/18",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "dia-chi-mac-dinh",
+                "18"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "check đã nhận hàng tăng số dư cho shop",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"93\", \"so_luong\": \"1\", \"id_bt\": \"\" },\r\n        { \"id_sp\": \"94\", \"so_luong\": \"1\", \"id_bt\": \"82\" }\r\n    ],\r\n    \"id_km\": \"1\",\r\n    \"id_dia_chi\": \"18\",\r\n    \"id_pttt\": \"4\",\r\n    \"ghi_chu\": \"hàng giao cần thận\"\r\n}//note là cái này là từ phần giỏ hang qua đơn hàng để dh nó hiện lên review trước\r\n"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/don-hang/da-nhan-hang/16",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "don-hang",
+                "da-nhan-hang",
+                "16"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "site shop",
+      "item": [
+        {
+          "name": "shop  trang thai don hang",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ly_do\":\"hàng chưa đúng chất lượng\"//nên làm kiêm popup tại vì chỉ có 1 trường nhập\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/huy-don-hang/3",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "huy-don-hang",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "shop don hang chi tiet",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/don-hang/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "don-hang",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "danh-gia-shop co api cho shop phanr hoi danh gia",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"phan_hoi\": \"fdgdfgdgfd\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/danh-gia",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "danh-gia"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thêm xóa  sản phẩm cho shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten_sp",
+                  "value": "tín đẹp trai g",
+                  "type": "text",
+                  "uuid": "195eb32a-a981-40b9-895c-5945328730be"
+                },
+                {
+                  "key": "code",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "e6ac4438-1b2b-4758-9228-66fdfbfd1bf9"
+                },
+                {
+                  "key": "hinh_sp",
+                  "type": "file",
+                  "uuid": "c27666e9-654d-4ff2-a37b-6ff3ae016215",
+                  "src": [
+                    "/D:/ttdt/media album/img/album anh 1/2.638965674483470433.jpg",
+                    "/D:/ttdt/media album/img/album anh 1/3.638965674551908131.jpg",
+                    "/D:/ttdt/media album/img/album anh 1/4.638965674614926991.jpg"
+                  ]
+                },
+                {
+                  "key": "gia",
+                  "value": "500000",
+                  "type": "text",
+                  "uuid": "d63d6cc5-c990-4f93-a7af-5d75244e91fb"
+                },
+                {
+                  "key": "sale",
+                  "value": "30",
+                  "type": "text",
+                  "uuid": "15a72a1b-35d9-43ae-a6e0-9a05fded0107"
+                },
+                {
+                  "key": "so_luong",
+                  "value": "5000",
+                  "type": "text",
+                  "uuid": "0ac57243-f9f6-46d0-8ea4-2114bf19835a"
+                },
+                {
+                  "key": "xuat_xu",
+                  "value": "hàn quốc",
+                  "type": "text",
+                  "uuid": "3855390f-355d-48ea-8021-9277030f9830"
+                },
+                {
+                  "key": "dvctn",
+                  "value": "công ty TNHH ko có",
+                  "type": "text",
+                  "uuid": "b329167d-1ec9-4e2f-8c07-cb4ce4693c89"
+                },
+                {
+                  "key": "dvt",
+                  "value": "cái",
+                  "type": "text",
+                  "uuid": "f0d0ffa5-4fbc-4ff3-8e67-babae1f4d815"
+                },
+                {
+                  "key": "mo_ta",
+                  "value": "sản phẩm rất  tốt",
+                  "type": "text",
+                  "uuid": "279cda4c-333e-401f-8632-481270b041ee"
+                },
+                {
+                  "key": "an_hien",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "8ced9806-da86-4548-92bd-290b3083b732"
+                },
+                {
+                  "key": "id_dm",
+                  "value": "10",
+                  "type": "text",
+                  "uuid": "f562acfe-8879-4329-8476-af3a0efd7bee"
+                },
+                {
+                  "key": "id_th",
+                  "value": "5",
+                  "type": "text",
+                  "uuid": "260cc7bf-8995-46f3-bb9f-b174da7b5a7f"
+                },
+                {
+                  "key": "hinh_bien_the_0",
+                  "type": "file",
+                  "uuid": "f37b748c-69c4-427e-b09b-b50b1457a986",
+                  "src": "/D:/ttdt/media album/img/album anh 1/4.638965674614926991.jpg"
+                },
+                {
+                  "key": "thuoc_tinh",
+                  "value": "[{\n    \"id_tt\":\"1\",\n    \"value\": \"bảo hành theo hảng\"\n},{\n    \"id_tt\":\"4\",\n    \"value\": \"core i5\"\n}]",
+                  "type": "text",
+                  "uuid": "a3a87161-6e1c-4dcc-9708-8db2a2fbaea6"
+                },
+                {
+                  "key": "bien_the",
+                  "value": "[{\n\n   \"ten_bien_the\":\"fdfgdfg\",\n    \"code\": \"\",\n    \"gia\": \"5000\",\n    \"so_luong\": \"100\"\n   \n},{\n    \"ten_bien_the\":\"xanh\",\n    \"code\": \"\",\n    \"gia\": \"5000\",\n    \"so_luong\": \"10\"\n},{\n    \"ten_bien_the\":\"vàng\",\n    \"code\": \"\",\n    \"gia\": \"50000\",\n    \"so_luong\": \"100\"\n}]",
+                  "type": "text",
+                  "uuid": "5fe1feec-1f7a-4989-b960-a7cb0095dc94"
+                },
+                {
+                  "key": "hinh_bien_the_2",
+                  "type": "file",
+                  "uuid": "d1c88770-4050-4235-91f1-b57d35974e0f",
+                  "src": "/D:/ttdt/media album/img/album anh 1/10.638965677464075707.jpg"
+                },
+                {
+                  "key": "hinh_bien_the_1",
+                  "type": "file",
+                  "uuid": "c3a45c16-bf2d-4641-9e18-b8f18d36a087",
+                  "src": "/D:/ttdt/media album/img/album anh 1/9.638965677387714573.jpg"
+                },
+                {
+                  "key": "note\n",
+                  "value": "khi sửa biến thể shop  nếu json ko gửi id nghĩa là có một biến thể mới còn nếu ko gửi id cũ thì mặc định xóa hết id đó vd sp có id biến thể là 1 2 3 fe gửi 2 3 thì xóa 1\n",
+                  "type": "text",
+                  "uuid": "e5bb3e2a-cd01-4642-b4fe-2f831a7fe037",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/san-pham",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "san-pham"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "sua sản phẩm cho shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten_sp",
+                  "value": "tín đẹp trai nhất",
+                  "type": "text",
+                  "uuid": "195eb32a-a981-40b9-895c-5945328730be"
+                },
+                {
+                  "key": "code",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "e6ac4438-1b2b-4758-9228-66fdfbfd1bf9"
+                },
+                {
+                  "key": "hinh_sp",
+                  "type": "file",
+                  "uuid": "c27666e9-654d-4ff2-a37b-6ff3ae016215",
+                  "src": [
+                    "/D:/ttdt/thong bao/img/bao-4.jpg",
+                    "/D:/ttdt/thong bao/img/mau-thong-bao_2204184241.png",
+                    "/D:/ttdt/thong bao/img/thuc-tap-sinh.jpg"
+                  ]
+                },
+                {
+                  "key": "gia",
+                  "value": "5000",
+                  "type": "text",
+                  "uuid": "d63d6cc5-c990-4f93-a7af-5d75244e91fb"
+                },
+                {
+                  "key": "sale",
+                  "value": "30",
+                  "type": "text",
+                  "uuid": "15a72a1b-35d9-43ae-a6e0-9a05fded0107"
+                },
+                {
+                  "key": "so_luong",
+                  "value": "5000",
+                  "type": "text",
+                  "uuid": "0ac57243-f9f6-46d0-8ea4-2114bf19835a"
+                },
+                {
+                  "key": "xuat_xu",
+                  "value": "hàn quốc",
+                  "type": "text",
+                  "uuid": "3855390f-355d-48ea-8021-9277030f9830"
+                },
+                {
+                  "key": "dvctn",
+                  "value": "công ty TNHH ko có",
+                  "type": "text",
+                  "uuid": "b329167d-1ec9-4e2f-8c07-cb4ce4693c89"
+                },
+                {
+                  "key": "dvt",
+                  "value": "cái",
+                  "type": "text",
+                  "uuid": "f0d0ffa5-4fbc-4ff3-8e67-babae1f4d815"
+                },
+                {
+                  "key": "mo_ta",
+                  "value": "sản phẩm rất  tốt",
+                  "type": "text",
+                  "uuid": "279cda4c-333e-401f-8632-481270b041ee"
+                },
+                {
+                  "key": "an_hien",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "8ced9806-da86-4548-92bd-290b3083b732"
+                },
+                {
+                  "key": "id_dm",
+                  "value": "3",
+                  "type": "text",
+                  "uuid": "f562acfe-8879-4329-8476-af3a0efd7bee"
+                },
+                {
+                  "key": "id_th",
+                  "value": "2",
+                  "type": "text",
+                  "uuid": "260cc7bf-8995-46f3-bb9f-b174da7b5a7f"
+                },
+                {
+                  "key": "hinh_bien_the_0",
+                  "type": "file",
+                  "uuid": "f37b748c-69c4-427e-b09b-b50b1457a986",
+                  "src": "/D:/ttdt/tin tuc/image/bhxh3.jpg"
+                },
+                {
+                  "key": "thuoc_tinh",
+                  "value": "[{\n    \"id_tt\":\"1\",\n    \"value\": \"bảo hành theo hảng\"\n},{\n    \"id_tt\":\"4\",\n    \"value\": \"core i5\"\n}]",
+                  "type": "text",
+                  "uuid": "a3a87161-6e1c-4dcc-9708-8db2a2fbaea6"
+                },
+                {
+                  "key": "bien_the",
+                  "value": "[{\n   \"id\":\"59\",\n   \"ten_bien_the\":\"hồng\",\n    \"code\": \"\",\n    \"gia\": \"50000\",\n    \"so_luong\": \"100\"\n   \n},{\n    \"id\":\"60\",\n    \"ten_bien_the\":\"tím\",\n    \"code\": \"\",\n    \"gia\": \"500000\",\n    \"so_luong\": \"10\"\n},{\n    \"ten_bien_the\":\"vàng\",\n    \"code\": \"\",\n    \"gia\": \"5000\",\n    \"so_luong\": \"1000\"\n}]",
+                  "type": "text",
+                  "uuid": "5fe1feec-1f7a-4989-b960-a7cb0095dc94"
+                },
+                {
+                  "key": "hinh_bien_the_1",
+                  "type": "file",
+                  "uuid": "b4e0c960-4887-4e03-868e-3ffde311b160",
+                  "src": "/D:/ttdt/tin tuc/image/article-1660637096146266870801.jpg"
+                },
+                {
+                  "key": "hinh_bien_the_2",
+                  "type": "file",
+                  "uuid": "d1c88770-4050-4235-91f1-b57d35974e0f",
+                  "src": "/D:/ttdt/tin tuc/image/hinh-luat-quoc-tich-.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/san-pham",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "san-pham"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "danh mục dropdown dùng để khi tạo sản phảm lấy id_dm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/danh-muc-san-pham/select",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "danh-muc-san-pham",
+                "select"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thuộc tính sp là khi slect vào nó tạo ra 1 input mới để sp lấy đc id_tt với value đưa vào biến thuoc_tinh khi tạo sản phảm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/thuoc-tinh-san-pham/select",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "thuoc-tinh-san-pham",
+                "select"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "shop don hang danh sach",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/don-hang/?trang_thai=0",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "don-hang",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "trang_thai",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "shop rut tien",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/yeu-cau-rut-tien",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "yeu-cau-rut-tien"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lich su rut tien shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/lich-su-rut-tien",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "lich-su-rut-tien"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "huy don hang cho shop",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ly_do\": \"fdfgdf\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/huy-don-hang/100",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "huy-don-hang",
+                "100"
+              ],
+              "query": [
+                {
+                  "key": "trang_thai",
+                  "value": "0",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy thông tin shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ly_do\": \"fdfgdf\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/profile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "profile"
+              ],
+              "query": [
+                {
+                  "key": "trang_thai",
+                  "value": "0",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy số dữ của shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/wallet",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "wallet"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "api thong ke tong quan cho shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/thong-ke-tong-quan",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "thong-ke-tong-quan"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "bieu do thong ke doanh thu chart  ccuar shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/thong-ke-doanh-thu-chart?month=12&type=month&year=2025",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "thong-ke-doanh-thu-chart"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "12"
+                },
+                {
+                  "key": "type",
+                  "value": "month",
+                  "description": "co kieu la day hoac month\n"
+                },
+                {
+                  "key": "year",
+                  "value": "2025"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thong ke san pham ban chay tu luc ban hàng tới giờ",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/thong-ke/san-pham-ban-chay?limit=5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "thong-ke",
+                "san-pham-ban-chay"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thong kê trang thai ban hang pie chart",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/site/shop/thong-ke/don-hang-trang-thai",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "site",
+                "shop",
+                "thong-ke",
+                "don-hang-trang-thai"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "admin",
+      "item": [
+        {
+          "name": "admin quick update sp dạng tắt bật",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"noi_bat\":\"\",\r\n    \"khoa\":\"\"\r\n}//note là khi gửi là 1 trong hai thằng phải undifnine nhà",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/san-pham/91/quick-update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "san-pham",
+                "91",
+                "quick-update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin danh muc sp",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten_dm",
+                  "value": "co cai nit that chu haha fdfg",
+                  "type": "text",
+                  "uuid": "ef8b2d96-d04c-4766-b8e5-30cbafa9e22d"
+                },
+                {
+                  "key": "parent_id",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "7642a39d-2851-4a13-a28f-50ddfcc16de8"
+                },
+                {
+                  "key": "an_hien",
+                  "value": "false",
+                  "type": "text",
+                  "uuid": "7455dc62-9a4b-4d48-b12d-95d3cbc197fa"
+                },
+                {
+                  "key": "slug",
+                  "value": "fdfgd",
+                  "type": "text",
+                  "uuid": "e6f77401-85c9-4584-81a4-89d284183e3e"
+                },
+                {
+                  "key": "hinh_dm",
+                  "type": "file",
+                  "uuid": "17ecabeb-0981-4d5e-95c5-35c54f6ea5ec",
+                  "src": "/C:/Users/Victus/OneDrive/Pictures/z5312724996698_43b81b1786ac632de42aba31438210ac.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/danh-muc-sp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "danh-muc-sp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin user",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "tai_khoan",
+                  "type": "text",
+                  "uuid": "3b8f0f94-9c5e-4ed5-bf86-bbcbad29d276",
+                  "value": "rezero00009",
+                  "disabled": true
+                },
+                {
+                  "key": "email",
+                  "value": "tin291020222@gmail.com",
+                  "type": "text",
+                  "uuid": "dadcd76d-e164-4884-b0df-b162651e478d",
+                  "disabled": true
+                },
+                {
+                  "key": "mat_khau",
+                  "value": "08111994@Knc",
+                  "type": "text",
+                  "uuid": "ee409abc-062d-4f7e-bf1c-dace54cd0c1e",
+                  "disabled": true
+                },
+                {
+                  "key": "mat_khau_nhap_lai",
+                  "value": "08111994@Knc",
+                  "type": "text",
+                  "uuid": "b2999b8d-60f4-4753-9983-b9bb06061479",
+                  "disabled": true
+                },
+                {
+                  "key": "ho_ten",
+                  "value": "tín là tín",
+                  "type": "text",
+                  "uuid": "9be197b5-cc39-409c-ad03-8d158b476041"
+                },
+                {
+                  "key": "vai_tro",
+                  "value": "0",
+                  "type": "text",
+                  "uuid": "cb93f78e-84be-4836-b478-6c64be33a4dd"
+                },
+                {
+                  "key": "hinh_user",
+                  "type": "file",
+                  "uuid": "0cb35c6f-acb2-4ecf-9225-a369e45876d3",
+                  "value": ""
+                },
+                {
+                  "key": "dien_thoai",
+                  "value": "0906986568",
+                  "type": "text",
+                  "uuid": "d8f88ee8-5189-42e2-8257-2e84fed85cdb"
+                },
+                {
+                  "key": "khoa",
+                  "value": "0",
+                  "type": "text",
+                  "uuid": "4415cdc4-c18a-44a7-b8a4-57cadab2dd8b"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/user/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "user",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin thuong hieu",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten_th",
+                  "value": "mec là mecc cẹc",
+                  "type": "text",
+                  "uuid": "22a3a9fa-d1de-413d-91e7-4bba2e336df8"
+                },
+                {
+                  "key": "slug",
+                  "value": "mec-mec",
+                  "type": "text",
+                  "uuid": "17cc6b43-1d16-4732-a56c-f922c640ab3d"
+                },
+                {
+                  "key": "an_hien",
+                  "value": "0",
+                  "type": "text",
+                  "uuid": "c3194cf6-8346-416b-adf5-55d1a68a2d7d"
+                },
+                {
+                  "key": "hinh_th",
+                  "type": "file",
+                  "uuid": "9691471c-045e-4748-868e-842a5076a796",
+                  "value": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thuong-hieu-sp/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thuong-hieu-sp",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin danh muc tin tuc",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ten_dm\": \"Tính năng mới hahaha fgdf\",\r\n    \"parent_id\": \"3\",\r\n    \"an_hien\": \"true\",\r\n    \"stt\": \"fdfgfdf\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/danh-muc-tin/4",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "danh-muc-tin",
+                "4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin tin tuc",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "tieu_de",
+                  "value": "fdgdfgdfdfgdfgdfgdfg",
+                  "type": "text",
+                  "uuid": "f9b50644-a84a-4662-bb14-611c5160d5f9"
+                },
+                {
+                  "key": "id_dm",
+                  "value": "3",
+                  "type": "text",
+                  "uuid": "e730922a-c0d6-4e5b-a489-990b62e48813"
+                },
+                {
+                  "key": "noi_dung",
+                  "value": "fdfgfdgfddddddđ",
+                  "type": "text",
+                  "uuid": "9323e10b-c625-453b-a567-63f621f4f905"
+                },
+                {
+                  "key": "tac_gia",
+                  "value": "abv",
+                  "type": "text",
+                  "uuid": "4d849ef7-0a48-4f1c-832c-69eb8e7d84ca"
+                },
+                {
+                  "key": "an_hien",
+                  "value": "false",
+                  "type": "text",
+                  "uuid": "828839b0-d4c3-4658-9f4a-80d0e57c69d9"
+                },
+                {
+                  "key": "hinh_tin",
+                  "type": "file",
+                  "uuid": "257f850f-c4eb-46ab-87ef-15807cceb537",
+                  "src": "/C:/Users/Victus/OneDrive/Pictures/z5299119310595_dd78d66718f697e562bc8a06639dd4f5.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/tin-tuc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "tin-tuc"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin thuoc tinh",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ten_thuoc_tinh\": \"Điện áp đầu vào\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thuoc-tinh-sp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thuoc-tinh-sp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin banner",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "fdgdffdfggffdf",
+                  "type": "text",
+                  "uuid": "129b1503-1370-4856-a4bd-dc671814040f"
+                },
+                {
+                  "key": "url",
+                  "value": "https://shopee.vn/f",
+                  "type": "text",
+                  "uuid": "df52a8b2-0258-4aa6-9c72-da1ee7f41f69"
+                },
+                {
+                  "key": "vi_tri",
+                  "value": "popup",
+                  "type": "text",
+                  "uuid": "27a8b872-6e21-493a-a979-349103e7b7d6"
+                },
+                {
+                  "key": "an_hien",
+                  "value": "true",
+                  "type": "text",
+                  "uuid": "0382cb1f-5563-403f-b4a4-b8648d0afb30"
+                },
+                {
+                  "key": "hinh_banner",
+                  "type": "file",
+                  "uuid": "0e65f0f6-b909-410a-9bc7-af3a27133eda",
+                  "value": ""
+                },
+                {
+                  "key": "stt",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "8d5b6c12-4083-4303-849f-9af852928960"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/banner/10",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "banner",
+                "10"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin pttt",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten_pt",
+                  "value": "Chuyển khoản",
+                  "type": "text",
+                  "uuid": "d2da996a-b8d5-4e23-bc2a-65cd333ae974"
+                },
+                {
+                  "key": "code",
+                  "value": "BANKING",
+                  "type": "text",
+                  "uuid": "4376860c-9aa1-4882-a0cd-b2aebdec8c9b"
+                },
+                {
+                  "key": "hinh_pttt",
+                  "type": "file",
+                  "uuid": "82430da4-cf47-4c12-af53-06001218dd5a",
+                  "src": "/C:/Users/Victus/OneDrive/Pictures/z5319349574894_f1e7f550adc9e30add8c20cb14473022.jpg"
+                },
+                {
+                  "key": "an_hien",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "f81565ce-7e3e-4da6-84af-1b551d468760"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/pttt",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "pttt"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin xem sản phẩm kích hoạt",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten_sp",
+                  "value": "tín đẹp trai nhất",
+                  "type": "text",
+                  "uuid": "195eb32a-a981-40b9-895c-5945328730be"
+                },
+                {
+                  "key": "code",
+                  "value": "",
+                  "type": "text",
+                  "uuid": "e6ac4438-1b2b-4758-9228-66fdfbfd1bf9"
+                },
+                {
+                  "key": "hinh_sp",
+                  "type": "file",
+                  "uuid": "c27666e9-654d-4ff2-a37b-6ff3ae016215",
+                  "src": [
+                    "/D:/ttdt/thong bao/img/bao-4.jpg",
+                    "/D:/ttdt/thong bao/img/mau-thong-bao_2204184241.png",
+                    "/D:/ttdt/thong bao/img/thuc-tap-sinh.jpg"
+                  ]
+                },
+                {
+                  "key": "gia",
+                  "value": "5000",
+                  "type": "text",
+                  "uuid": "d63d6cc5-c990-4f93-a7af-5d75244e91fb"
+                },
+                {
+                  "key": "sale",
+                  "value": "30",
+                  "type": "text",
+                  "uuid": "15a72a1b-35d9-43ae-a6e0-9a05fded0107"
+                },
+                {
+                  "key": "so_luong",
+                  "value": "5000",
+                  "type": "text",
+                  "uuid": "0ac57243-f9f6-46d0-8ea4-2114bf19835a"
+                },
+                {
+                  "key": "xuat_xu",
+                  "value": "hàn quốc",
+                  "type": "text",
+                  "uuid": "3855390f-355d-48ea-8021-9277030f9830"
+                },
+                {
+                  "key": "dvctn",
+                  "value": "công ty TNHH ko có",
+                  "type": "text",
+                  "uuid": "b329167d-1ec9-4e2f-8c07-cb4ce4693c89"
+                },
+                {
+                  "key": "dvt",
+                  "value": "cái",
+                  "type": "text",
+                  "uuid": "f0d0ffa5-4fbc-4ff3-8e67-babae1f4d815"
+                },
+                {
+                  "key": "mo_ta",
+                  "value": "sản phẩm rất  tốt",
+                  "type": "text",
+                  "uuid": "279cda4c-333e-401f-8632-481270b041ee"
+                },
+                {
+                  "key": "an_hien",
+                  "value": "1",
+                  "type": "text",
+                  "uuid": "8ced9806-da86-4548-92bd-290b3083b732"
+                },
+                {
+                  "key": "id_dm",
+                  "value": "3",
+                  "type": "text",
+                  "uuid": "f562acfe-8879-4329-8476-af3a0efd7bee"
+                },
+                {
+                  "key": "id_th",
+                  "value": "2",
+                  "type": "text",
+                  "uuid": "260cc7bf-8995-46f3-bb9f-b174da7b5a7f"
+                },
+                {
+                  "key": "hinh_bien_the_0",
+                  "type": "file",
+                  "uuid": "f37b748c-69c4-427e-b09b-b50b1457a986",
+                  "src": "/D:/ttdt/tin tuc/image/bhxh3.jpg"
+                },
+                {
+                  "key": "thuoc_tinh",
+                  "value": "[{\n    \"id_tt\":\"1\",\n    \"value\": \"bảo hành theo hảng\"\n},{\n    \"id_tt\":\"4\",\n    \"value\": \"core i5\"\n}]",
+                  "type": "text",
+                  "uuid": "a3a87161-6e1c-4dcc-9708-8db2a2fbaea6"
+                },
+                {
+                  "key": "bien_the",
+                  "value": "[{\n   \"id\":\"59\",\n   \"ten_bien_the\":\"hồng\",\n    \"code\": \"\",\n    \"gia\": \"50000\",\n    \"so_luong\": \"100\"\n   \n},{\n    \"id\":\"60\",\n    \"ten_bien_the\":\"tím\",\n    \"code\": \"\",\n    \"gia\": \"500000\",\n    \"so_luong\": \"10\"\n},{\n    \"ten_bien_the\":\"vàng\",\n    \"code\": \"\",\n    \"gia\": \"5000\",\n    \"so_luong\": \"1000\"\n}]",
+                  "type": "text",
+                  "uuid": "5fe1feec-1f7a-4989-b960-a7cb0095dc94"
+                },
+                {
+                  "key": "hinh_bien_the_1",
+                  "type": "file",
+                  "uuid": "b4e0c960-4887-4e03-868e-3ffde311b160",
+                  "src": "/D:/ttdt/tin tuc/image/article-1660637096146266870801.jpg"
+                },
+                {
+                  "key": "hinh_bien_the_2",
+                  "type": "file",
+                  "uuid": "d1c88770-4050-4235-91f1-b57d35974e0f",
+                  "src": "/D:/ttdt/tin tuc/image/hinh-luat-quoc-tich-.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/san-pham/kich-hoat/105",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "san-pham",
+                "kich-hoat",
+                "105"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin tìm kiếm sản phẩm",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"noi_bat\":\"\",\r\n    \"khoa\":\"\"\r\n}//note là khi gửi là 1 trong hai thằng phải undifnine nhà"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/san-pham/tim-kiem?keyword=Opp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "san-pham",
+                "tim-kiem"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "Opp"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin vouche(thêm xóa lấy chi tiết)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ten_km\":\"giảm giá tháng 1\",\r\n    \"code\": \"NYZKD33\",\r\n    \"loai_km\": \"0\",\r\n    \"gia_tri_giam\": \"60000\",\r\n    \"gia_giam_toi_da\": \"60000\",\r\n    \"gia_tri_don_min\": \"50000\",\r\n    \"so_luong\": \"500\",\r\n    \"gioi_han_user\": \"15\",\r\n    \"ngay_bd\": \"2026-01-13\",\r\n    \"ngay_kt\": \"2026-12-23\",\r\n    \"trang_thai\": \"1\"\r\n}//note là trang thai 0 là không hoạt động 1 là hoạt dộng",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/voucher/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "voucher",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin đơn  hang danh sách",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/don-hang?trang_thai=0",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "don-hang"
+              ],
+              "query": [
+                {
+                  "key": "trang_thai",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "sửa voucher admin",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ten_km\":\"giảm giá tháng 10\",\r\n    \"so_luong\": \"58\",\r\n    \"ngay_kt\": \"2025-12-25\",\r\n    \"gioi_han_user\": \"2\",\r\n    \"trang_thai\": \"1\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/voucher/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "voucher",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin don hang chi tiet",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/don-hang/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "don-hang",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin xet duyet tinh trang don hang don hang",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ly_do\": \"\",\r\n    \"trang_thai_moi\": \"3\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/don-hang/trang-thai/16",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "don-hang",
+                "trang-thai",
+                "16"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin xac-nhan-thu-cong-thanh-toan(co id)",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ly_do\": \"hàng không đúng chất lượng\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thanh-toan/xac-nhan-thu-cong",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thanh-toan",
+                "xac-nhan-thu-cong"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin thong_ke tổng quản",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thong-ke/tong-quan",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thong-ke",
+                "tong-quan"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "admin thống kê doanh thu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thong-ke/doanh-thu-chart?type=day&year&month=5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thong-ke",
+                "doanh-thu-chart"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "day"
+                },
+                {
+                  "key": "year",
+                  "value": null
+                },
+                {
+                  "key": "month",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thong-ke-top",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thong-ke/top",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thong-ke",
+                "top"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thống kê trạng  thái đơn hàng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thong-ke/trang-thai-don-hang",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thong-ke",
+                "trang-thai-don-hang"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ds yc chuyển tiền cho shop",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thanh-toan/yeu-cau-rut-tien/pending",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thanh-toan",
+                "yeu-cau-rut-tien",
+                "pending"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "lấy chi tiết 1 ycc rút tiền có kèm link  qr để chuyền khoản",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"so_tien\": \"50000\",\r\n    \"ten_ngan_hang\":\"VIETINBANK\",\r\n    \"so_tk\": \"970411556401\",\r\n    \"ten_chu_tk\": \"Truong Van Cong Tin\",\r\n    \"ghi_chu\": \"rút tiên nhanh\"\r\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thanh-toan/yeu-cau-rut-tien/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thanh-toan",
+                "yeu-cau-rut-tien",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update trang thai yc rút tiền cho  shop",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n   \"ly_do\": \"\",\r\n   \"trang_thai\": \"1\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thanh-toan/yeu-cau-rut-tien/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thanh-toan",
+                "yeu-cau-rut-tien",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "thong ke ty trong danh muc",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"items\": [\r\n        { \"id_sp\": \"94\", \"id_bt\": \"83\" , \"so_luong\": \"2\"},\r\n        { \"id_sp\": \"95\", \"id_bt\": null , \"so_luong\": \"2\"}\r\n    ]\r\n}\r\n"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/thong-ke/ty-trong-danh-muc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "thong-ke",
+                "ty-trong-danh-muc"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

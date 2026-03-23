@@ -1,0 +1,6288 @@
+import express, { Request, Response } from 'express';
+import fs from 'fs';
+import bcrypt from 'bcryptjs';
+import { AllowedUpdateDiaChi, CreateDiaChiByUser, DiaChiParams, GetAllDiaChiByUser } from '../types/dia_chi_user';
+import { checkAuth, checkShop } from '../middleware/auth';
+import {Banner, CuocHoiThoai, DanhGia, DanhMucTin, Dia_chi_User, DM_San_Pham, DonHang, DonHangChiTiet, GioHang, GioHangChiTiet, IMG_SanPham, KhuyenMaiUser, PTTT, SanPham, SanPhamBienThe, ThanhVienHoiThoai, ThongBao, ThuocTinh, ThuocTinhSP, ThuongHieu, TinNhan, TinTuc, User, ViShop, Voucher, YeuCauRutTien, YeuThichSp, YeuThichTin} from '../models';
+import { AuthUser } from '../types/express';
+import { getNameFromCodes, normalizeBoolean, validateAddressCodes, validateForeignKey } from '../ultis/validate';
+import { col, DATE, fn, json, literal, Op, Order, Sequelize, where, WhereOptions } from 'sequelize';
+import { toggleYeuThichInput, toggleYeuThichSchema } from '../schema/yeuthich.schema';
+import validate from '../middleware/validate';
+import { getAllYeuThichByUser, ParamsYeuthichSP } from '../types/yeuthich_sp';
+import { toggleYeuThichTinInput, toggleYeuThichTinSchema } from '../schema/yeuthichtin.schema';
+import { ACTIVATED_VALUE, ADMIN_ROLE_ID, AN_HIEN_VALUE, Boolean_Type, DIA_CHI_CHUA_MAC_DINH_VALUE, DIA_CHI_MAC_DINH_VALUE, DON_HANG_DA_CHUA_XAC_NHAN, DON_HANG_DA_GIAO_VALUE, DON_HANG_DANG_GIAO_VALUE, DON_HANG_HUY_VALUE, FIXED_SHIPPING_FEE, GiamGiaTheoPhanTram, KHOA_VALUE, LOAI_THONG_BAO, NOi_BAT_VALUE, RUT_TIEN_PENDING_VALUE, SHOP_VALUE, THANH_TOAN_ONLINE, THANH_TOAN_THANH_CONG_VALUE, THONG_BAO_SEEN, VAI_TRO_NHAN, VOUCHER_HOAT_DONG_VALUE } from '../config/explain';
+import { formattedDataYeuThichTin, ParamsYeuThichTin } from '../types/yeuthichtin';
+import { createDanhGiaSpInput, createDanhGiaSpSchema, traLoiDanhGiaSpInput, traLoiDanhGiaSpSchema } from '../schema/danhgia.schema';
+import { uploadMiddleware } from '../middleware/upload';
+import { sequelize } from '../config/database';
+import { covertWebPathToAbsolutePath, processDonHangImg, processFilePath, processSanPhamImgThumanail } from '../ultis/pathprocess';
+import { IMG_DanhGia } from '../models/img_dg';
+import { cleanUpfiles } from '../ultis/file';
+import { GetAllDanhGia, ParamsDanhGiaById, ParamsDanhGiaBySlug, RatingAggregateResult, ThongKeSaoResult } from '../types/danhgia';
+import { allowedUpdateSanPham, createBienTheSp, createThuocTinhSp, GetALLSanPHam, ImgBienThe, ParamsSanPhamBySlug, ParamTimKiemSanPham, ThuocTinhMap, TimKiemGoiYSP } from '../types/sanpham';
+import { createSanPhamInput, createSanPhamSchema, getMergeSanPhamInput, getMergeSanPhamschema, ParamSanPhamIdInput, sanPhamIdSchema, updateSanPhamInPut, updateSanPhamSchema } from '../schema/sanpham.schema';
+import { CartGroupByShop, CartItemWithShop, GetCartItem } from '../types/gio_hang';
+import { cartIdInput, cartIdSchema, createCartInput, createCartSchema, MergeCartInput, mergeCartSchema, toggleCartInput, toggleCartSchema, updateCartInput, updateCartSchema } from '../schema/cart.schema';
+import { generateOrderCode, generateSku, generateSlug } from '../ultis/slugrename';
+import { updateUserInput, updateUserSchema } from '../schema/user.schema';
+import { DanhMucSidebarParent, DanhMucTreeNode, FilterQuery } from '../types/dm_sp';
+import { cancelDonHangInput, cancelDonHangSchema, changeStatusDonHangByShopInput, changeStatusDonHangByShopSchema, changeStatusDonHangShopInput, changeStatusDonHangShopSchema, createDonHangInput, createDonHangSchema,  getDonHangDetailInput,  getDonHangDetailSchema, previewDonHangInput, previewDonHangSchema } from '../schema/donhang.schema';
+import { BienTheData, createSanPhamData, createShopGroup, DonHangWithChiTiet, GetallDonHang, SanPhamData, ShopGroup } from '../types/don_hang';
+import { createThanhToanInput, createThanhToanSchema, ParamsThanhToanIdInput, ParamsThanhToanIdSchema } from '../schema/thanhtoan.shema';
+import { GetAllChuaThanhToan, PayOsWebhookData, PayOswebhookPayLoad, SePayPGWebhookPayload, ThanhToanBody } from '../types/thanhtoan';
+import { payos } from '../config/payOs';
+import { verifyPayOsWebhook } from '../ultis/payos';
+import { createShopInput, createShopSchema, rutTienInput, rutTienSchema } from '../schema/shop.schema';
+import { GetAllLichSuRutTienShop } from '../types/shop';
+import { DanhMucTinParams, DanhMucTinSidebarParent, DanhMucTinTreeNode } from '../types/dm_tin';
+import { GetAllTinTuc, ParamsTintucByID } from '../types/tintuc';
+import { GetBannerInput, getBannerSchema } from '../schema/banner.schema';
+import {  GroupedBanner, MangBanner } from '../types/banner';
+import { ThongKeDoanhThu, ThongKeTop } from '../types/thong_ke';
+import redisClient from '../config/redis';
+import { REDIS_KEYS, REDIS_TTL } from '../ultis/redisexplain';
+import { CustomError } from '../types/appError';
+import { logger } from '../ultis/logger';
+import {  resendLimiterPaymentOnline } from '../middleware/limitedreq';
+import { sepayClient } from '../config/Sepay';
+import { GetAllThongBao, ParamsThongBaoByID, ThongBaoReadAll } from '../types/thong_bao';
+import { noficationType, thongBaoTemplate } from '../constants/thong_bao';
+import { buildRoom, ChatRoom, SocketRoomName } from '../constants/socket-contants';
+import { GetAllChatInput, GetAllChatSchema, IsHideCoverstationInput, IsHideCoverstationSchema, ReadAllChatInput, ReadAllChatSchema, ReadHiddenConversationInput, ReadHiddenConversationSchema, RecallMessageInput, RecallMessageSchema, SendChatInput, SendChatSchema, ShopChatSchema, ShopChatSInput, UserChatSchema, UserChatSInput } from '../schema/chat.schema';
+import {   Is_Read_MESSAGE, LINE_MESSAGE, LOAI_HOI_THOAI, VAI_TRO_USER } from '../constants/chat';
+import { findOrCreateChatRoom } from '../ultis/chathelp';
+import { ChatMessage, GetAllChatQuery, GetAllConVerStation, ListInbox1To1, TimKiemGoiYHoiThoai, TimKiemGoiYTinNhan } from '../types/chat';
+
+const router = express.Router();
+
+type MulterFieldFiles = {[filedname: string]: Express.Multer.File[]};
+//dia chi
+router.get<{},{},{},GetAllDiaChiByUser>('/dia-chi',checkAuth,async(req: Request, res: Response)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const {id} = userPayload;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page - 1) * limit;
+		const {rows,count} = await Dia_chi_User.findAndCountAll({
+			limit: limit,
+			offset: offset,
+			where: {id_user: id},
+			order: [['mac_dinh','DESC'],['createdAt','DESC']]
+		});
+		const  danhSachDayDu = await  Promise.all(
+			rows.map(async(item)=>{
+				const addr: Dia_chi_User = item.toJSON();
+				const {tinh_name, quan_name,phuong_name} = await  getNameFromCodes(addr.tinh,addr.quan, addr.phuong);
+				return {
+					id: addr.id,
+					ho_ten: addr.ho_ten,
+					dien_thoai: addr.dien_thoai,
+					dia_chi: addr.dia_chi,
+					tinh: tinh_name,
+					quan: quan_name,
+					phuong: phuong_name,
+					mac_dinh: addr.mac_dinh
+				}
+			})
+		)
+		const totalPages = Math.ceil(count / limit);
+		const result = {
+			data: danhSachDayDu,
+			pagination: {
+				currentPage : page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			}
+		}
+		return res.status(200).json({result});
+	} catch (error) {
+		const err = error as CustomError
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách địa chỉ của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy  tất  cả địa chỉ của 1 user"});
+	}
+});
+router.post<{},{},CreateDiaChiByUser>('/dia-chi',checkAuth,async(req,res)=>{
+	try {
+		const {ho_ten, dien_thoai, dia_chi, tinh, quan, phuong, mac_dinh} = req.body;
+		const userPayload = req.user as AuthUser;
+		const {id} = userPayload;
+		const hoTenTrim = ho_ten?.trim();
+		const dienThoaiTrim = dien_thoai?.trim();
+		const diaChiTrim = dia_chi?.trim();
+		if(!hoTenTrim || !dienThoaiTrim || !diaChiTrim || !tinh || !quan || !phuong ){
+			throw {status: 400, thong_bao: "Bạn chưa nhập đủ thông tin"};
+		}
+		if(hoTenTrim.length < 5){
+			throw {status: 400, thong_bao: "Họ và tên  phải hơn 5 ký tự"};
+		}
+		if(isNaN(Number(dienThoaiTrim)) || dienThoaiTrim.length < 9){
+			throw {status: 400, thong_bao: "Điện thoại phải là số và phải hơn 9 ký tự"};
+		}
+		const isValid = await validateAddressCodes(tinh,quan,phuong);
+		if(!isValid){
+			throw {status: 400, thong_bao: "Địa chỉ tỉnh/quận/phường không hợp lệ"}
+		}
+		// const allowedMacDinh = [0,1];
+		// if(!allowedMacDinh.includes(Number(mac_dinh))){
+		//     throw {status: 400 , thong_bao: "Giá trị của mặc định không hợp lệ"}
+		// }
+		const macDinhValue = normalizeBoolean(mac_dinh,"Trường mặc định");
+		 if(macDinhValue === 1){
+			await Dia_chi_User.update(
+				{mac_dinh: 0},
+				{where: {
+					id_user: id,
+				}});
+		}
+		const newDiaChi = await Dia_chi_User.create({
+			id_user: id,
+			ho_ten: hoTenTrim,
+			dien_thoai: dienThoaiTrim,
+			dia_chi: diaChiTrim,
+			tinh,
+			quan,
+			phuong,
+			mac_dinh: macDinhValue
+		})
+		console.log(newDiaChi);
+	   
+		return res.status(200).json({thong_bao: "Đã  thêm địa chỉ mới thành công", success: true, id: newDiaChi.id});
+	} catch (error) {
+		const err = error as CustomError;
+		
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi thêm địa chỉ mới";
+		if(status >= 500 ){
+			logger.error(`[CRITICAL] Lỗi APi thêm địa chỉ của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.get<DiaChiParams>('/dia-chi/:id',checkAuth,async(req,res)=>{
+	try {
+		const  {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		if(isNaN(Number(id))){
+			throw {status: 400 , thong_bao: "ID địa chỉ không hợp lệ"};
+		}
+		const diaChi = await Dia_chi_User.findOne({
+			where: {
+				id,
+				id_user
+			},
+			attributes: ['id','id_user','dia_chi','ho_ten','dien_thoai','tinh','quan','phuong','mac_dinh','createdAt']
+		});
+		if(!diaChi){
+			throw {status: 404, thong_bao: "Địa chỉ không tồn tại"};
+		}
+		res.status(200).json({diaChi, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi khi  lấy 1 đia chỉ cụ thể";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi lấy  địa chỉ chi tiết của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao});
+	}
+})
+router.put<DiaChiParams,{},CreateDiaChiByUser>('/dia-chi/:id',checkAuth,async(req,res)=>{
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		if(isNaN(Number(id))){
+			throw {status: 400 , thong_bao: "ID địa chỉ không hợp lệ"};
+		}
+		const {ho_ten, dien_thoai, dia_chi, tinh, phuong, quan, mac_dinh} = req.body;
+		const diaChi = await Dia_chi_User.findOne({
+			where: {
+				id,
+				id_user
+			}
+		});
+		if(!diaChi){
+			throw {status: 404, thong_bao: "Không tìm thấy dịa chỉ để cập nhật"};
+		}
+		const hoTenTrim = ho_ten?.trim();
+		const dienThoaiTrim = dien_thoai?.trim();
+		const diaChiTrim = dia_chi?.trim();
+		if(!hoTenTrim || !dienThoaiTrim || !diaChiTrim || !tinh || !quan || !phuong ){
+			throw {status: 400, thong_bao: "Bạn chưa nhập đủ thông tin"};
+		}
+		const allowedUpdate: AllowedUpdateDiaChi = {};
+		if(hoTenTrim !== undefined && diaChi.ho_ten !== hoTenTrim){
+			if(hoTenTrim.length < 5){
+				throw {status: 400, thong_bao: "Họ và tên  phải hơn 5 ký tự"};
+			}
+			allowedUpdate.ho_ten = hoTenTrim;
+		}
+		if(dienThoaiTrim !== undefined && diaChi.dien_thoai !== dienThoaiTrim){
+			if(isNaN(Number(dienThoaiTrim)) || dienThoaiTrim.length < 9){
+				throw {status: 400, thong_bao: "Điện thoại phải là số và phải hơn 9 ký tự"};
+			}
+			allowedUpdate.dien_thoai = dienThoaiTrim;
+		}
+		if(diaChi.tinh !== tinh || diaChi.phuong !== phuong || diaChi.quan !== quan){
+			const isValid = await validateAddressCodes(tinh,quan, phuong);
+			if(!isValid){
+				throw {status: 400, thong_bao: "Địa chỉ tỉnh/quận/phường không hợp lệ"}
+			}
+			allowedUpdate.tinh = tinh; 
+			allowedUpdate.quan = quan;
+			allowedUpdate.phuong = phuong;
+		}
+		
+		const  macDinhValue = normalizeBoolean(mac_dinh);
+		if(normalizeBoolean(diaChi.mac_dinh) !== macDinhValue){
+			allowedUpdate.mac_dinh = macDinhValue;
+			//cập nhật lại cho tất cả thằng khác là mặc định thành false
+			if(macDinhValue === 1){
+				await Dia_chi_User.update(
+					{mac_dinh: 0},
+					{where: {
+						id_user: diaChi.id_user,
+						id: {[Op.not]: id}
+					}}
+				);
+			}
+		}
+		if(Object.keys(allowedUpdate).length > 0){
+			await diaChi.update(allowedUpdate);
+			const UpdateDiaChi = diaChi.toJSON();
+			return res.status(200).json({thong_bao: ` Đã cập nhật Địa chỉ có id là ${id}`,  success: true});
+		}
+		const unUpdateDiaChi = diaChi.toJSON();
+		return res.status(200).json({thong_bao: `Khoong có cập nhật gì ở dia chỉ có ID là ${id}`, success: true});
+	} catch (error) {
+		const err= error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khí  cập nhật Địa chỉ";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi sửa địa chỉ của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+	}
+})
+// GET /dia-chi/mac-dinh
+router.get('/dia-chi-mac-dinh', checkAuth, async (req, res) => {
+    try {
+        const userPayload = req.user as AuthUser;
+        const id_user = userPayload.id;
+
+        
+        const diaChi = await Dia_chi_User.findOne({
+            where: {
+                id_user: id_user,
+                mac_dinh: DIA_CHI_MAC_DINH_VALUE
+            }
+        });
+
+        if (!diaChi) {
+            // Trường hợp user chưa set cái nào mặc định, có thể trả về null hoặc lấy cái mới nhất tạo
+            return res.status(200).json({
+                success: true,
+                data: null, 
+                thong_bao: "Chưa có địa chỉ mặc định"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: diaChi
+        });
+
+    } catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy  địa chỉ mặc định của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+        return res.status(500).json({ success: false, thong_bao: "Lỗi lấy địa chỉ mặc định" });
+    }
+});
+
+// PATCH /dia-chi/set-default/:id
+router.patch<DiaChiParams>('/dia-chi-mac-dinh/:id', checkAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userPayload = req.user as AuthUser;
+        const id_user = userPayload.id;
+        const diaChi = await Dia_chi_User.findOne({
+            where: { id: id, id_user: id_user }
+        });
+
+        if (!diaChi) {
+            throw { status: 404, thong_bao: "Địa chỉ không tồn tại" };
+        }
+        if (normalizeBoolean(diaChi.mac_dinh) === DIA_CHI_MAC_DINH_VALUE) {
+            return res.status(200).json({ success: true, thong_bao: "Địa chỉ này đã là mặc định rồi" });
+        }
+
+        // 3. Reset tất cả địa chỉ của user này về 0 (Bỏ mặc định cũ)
+        await Dia_chi_User.update(
+            { mac_dinh: DIA_CHI_CHUA_MAC_DINH_VALUE },
+            { where: { id_user: id_user } }
+        );
+
+        
+        await diaChi.update({ mac_dinh: DIA_CHI_MAC_DINH_VALUE });
+
+        return res.status(200).json({
+            
+            thong_bao: "Đã thay đổi địa chỉ mặc định thành công",success: true
+        });
+
+    } catch (error) {
+        const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi thay đổi địa chỉ mặc định của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+        return res.status(err.status || 500).json({ thong_bao: err.thong_bao || "Lỗi server", success: false });
+    }
+});
+router.delete<DiaChiParams>('/dia-chi/:id',checkAuth,async(req,res)=>{
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id
+		const diaChi = await Dia_chi_User.findOne({
+			where: {
+				id,
+				id_user
+			}
+		});
+		if(!diaChi){
+			throw {status: 404, thong_bao: "Không tìm thấy địa chỉ để xóa"};
+		}
+		await diaChi.destroy();
+		if(normalizeBoolean(diaChi.mac_dinh) === 1){
+			const another = await Dia_chi_User.findOne({
+				where: {
+					id_user: diaChi.id_user
+				},
+				order: [['id','ASC']]
+
+			});
+			if(another){
+				await another.update({mac_dinh: 1})
+			}
+		}
+		return res.status(200).json({thong_bao: "Đã xóa dịa chỉ thành công", success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi xóa địa chỉ";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi xóa địa chỉ của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+// yeu thích sp
+router.post<{},{},toggleYeuThichInput>('/yeu-thich-sp/toggle',checkAuth,validate(toggleYeuThichSchema),async(req,res)=>{
+	try {
+		const {id_sp} = req.body;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const productExisting = await SanPham.findByPk(id_sp);
+		if(!productExisting){
+			throw {status: 404, thong_bao: "Sản phẩm không tồn tại"};
+		}
+		const existingYeuThich = await YeuThichSp.findOne({
+			where: {
+				id_sp: id_sp,
+				id_user: id_user
+			}
+		});
+		if(existingYeuThich){
+			await existingYeuThich.destroy();
+			return res.status(200).json({thong_bao: "Đã bỏ sản phẩm yêu thích", success: true, action: "removed"});
+		}else{
+			await YeuThichSp.create({
+				id_sp,
+				id_user
+			});
+			return res.status(200).json({thong_bao: "Đã thêm vào  sản  phẩm yêu thích", success: true, action: "added"});
+		}
+
+	} catch (error) {   
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy  chủ khi  thêm vào sản phẩm yêu thích";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi thêm yêu thích sản phẩm của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao});
+	}
+})
+router.get<{},{},{},getAllYeuThichByUser>('/yeu-thich-sp',checkAuth,async(req,res)=>{
+	try {
+		const userPayload = req.user  as AuthUser;
+		const id_user = userPayload.id;
+		// console.log(id_user);
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const offset = (page -1) * limit;
+		const {rows, count} = await YeuThichSp.findAndCountAll({
+			where: {id_user:id_user},
+			limit: limit,
+			offset: offset,
+			order: [['createdAt','DESC']],
+				include: [
+					{
+						model: SanPham,
+						attributes: ['id','ten_sp','so_luong','slug','img','xuat_xu','gia','sale','dvt','id_user','mo_ta'],
+						as: 'yeu_thich_sp',
+						where: {an_hien: AN_HIEN_VALUE, khoa: {[Op.not]: KHOA_VALUE}, is_active: ACTIVATED_VALUE}
+					}
+				]
+		});
+		const totalPages = Math.ceil(count/ limit);
+		const result = {
+			data: rows,
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			}
+		}
+		return  res.status(200).json({result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách yêu thích sản phẩm của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+
+		return res.status(500).json({thong_bao:"Lỗi máy chủ khi lấy danh  sách yêu  thích"});
+	}
+});
+router.delete<ParamsYeuthichSP>('/yeu-thich/:id',checkAuth,async(req,res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const {id} = req.params;
+		if (isNaN(Number(id))) {
+			throw { status: 400, thong_bao: "ID không hợp lệ" };
+		}
+		const ytSP = await  YeuThichSp.findOne({
+			where: {
+				id: id,
+				id_user: id_user
+			}
+		});        
+		if(!ytSP){
+			throw {status: 404, thong_bao: "Không tìm thấy sản phẩm yêu  thích để xóa"};
+		}
+		await ytSP.destroy();
+		return res.status(200).json({thong_bao:"Đã xóa sản phẩm yêu thích", success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi xóa sản phẩm yêu thích"
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi xóa  yêu thích sản phẩm của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+//yêu thích tin
+router.post<{},{},toggleYeuThichTinInput>('/yeu-thich-tin/toggle',checkAuth,validate(toggleYeuThichTinSchema),async(req,res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const {id_tin} = req.body;
+		const tinTucExsting = await TinTuc.findByPk(id_tin);
+		if(!tinTucExsting){
+			throw {status: 404, thong_bao: "Tin tức  không tồn tại"};
+		}
+		const existingYeuThich = await YeuThichTin.findOne({
+			where: {
+				id_user: id_user,
+				id_tin: id_tin
+			}
+		});
+		if(existingYeuThich){
+			await existingYeuThich.destroy();
+			return res.status(200).json({thong_bao: "Đã bỏ tin tức yêu thích", success: true, action: "remove"});
+		}else{
+			await YeuThichTin.create({
+				id_tin,
+				id_user
+			})
+			return res.status(200).json({thong_bao: "Đã thêm vào tin tức yêu thích", success: true, action: "added"});
+		}
+
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi thêm vào danh sách tin yêu  thích";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi thêm yêu thích tin tức của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.get<{},{},{}, getAllYeuThichByUser>('/yeu-thich-tin',checkAuth, async(req,res)=>{
+	try {
+		const  userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const page = Number(req.query.page) > 0 ? Number(req.query.limit) : 1;
+		const offset = (page - 1) * limit;
+		const {rows , count} = await YeuThichTin.findAndCountAll({
+			where: {
+				id_user: id_user
+			},
+			limit: limit,
+			offset: offset,
+			order: [['createdAt','DESC']],
+				include: [
+					{
+						model: TinTuc,
+						attributes: ['id','tieu_de','img','id_dm','noi_dung','luot_xem','tac_gia','createdAt'],
+						where: {an_hien: AN_HIEN_VALUE},
+						as: "tin_tuc",
+							include: [
+								{model: DanhMucTin,
+									attributes: ['id','ten_dm'],
+									where: {an_hien: AN_HIEN_VALUE},
+									as: "loai_tin_tuc"
+								}
+							]
+					}
+				]
+		});
+		const formattedData = rows.map(item=>{
+			const yt = item as unknown as formattedDataYeuThichTin;
+			const tinTuc = yt.tin_tuc;
+			const loaiTin = tinTuc.loai_tin_tuc;
+			return {
+				id_yeu_thich: yt.id,
+				ngay_thich: yt.createdAt,
+				id_tin: tinTuc.id,
+				tieu_de: tinTuc.tieu_de,
+				img: tinTuc.img,
+				noi_dung: tinTuc.noi_dung,
+				tac_gia: tinTuc.tac_gia,
+				ten_danh_muc: loaiTin.ten_dm,
+				id_loai_tin: loaiTin.id
+
+			}
+		})
+		const totalPages = Math.ceil(count / limit);
+		const result = {
+			data: formattedData,
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			}
+		};
+		return res.status(200).json({result, success: true});
+	} catch (error) {
+		const err =  error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách yêu thích tin tức của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy danh sách tin yêu  thích"})
+	}
+})
+router.delete<ParamsYeuThichTin>('/yeu-thich-tin/:id',checkAuth,async(req,res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const {id} = req.params;
+		if (isNaN(Number(id))) {
+			throw { status: 400, thong_bao: "ID không hợp lệ" };
+		}
+		const ytTin = await  YeuThichTin.findOne({
+			where: {
+				id: id,
+				id_user: id_user
+			}
+		});        
+		if(!ytTin){
+			throw {status: 404, thong_bao: "Không tìm thấy tin tức yêu  thích để xóa"};
+		}
+		await ytTin.destroy();
+		return res.status(200).json({thong_bao:"Đã xóa tin tức yêu thích", success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi xóa tin tức yêu thích"
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi xóa yêu thích tin tức của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+//dánh giá
+router.post<{},{},createDanhGiaSpInput>('/danh-gia',checkAuth,uploadMiddleware,validate(createDanhGiaSpSchema),async(req,res)=>{
+	const t = await sequelize.transaction();
+	let isCommited = false;
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const files = req.files as MulterFieldFiles;
+		const hinhDgFiles = files?.['hinh_dg'] || [];
+		const {id_sp,noi_dung, so_sao,tinh_nang, chat_luong} = req.body;
+		const SanPhamCheck = await SanPham.findOne({
+			where: {id: id_sp},
+			attributes: ['id','id_user','slug']
+		});
+		if(!SanPhamCheck){
+			throw {status: 404, thong_bao: "Sản phẩm không tồn tại"};
+		}
+		if(SanPhamCheck.id_user === id_user){
+			throw {status: 400, thong_bao: "Bạn không thể đánh giá sản phẩm của chính mình"}
+		}
+		const hasPurchased = await DonHang.findOne({
+		    where: {
+		        id_user: id_user,
+		        trang_thai_dh: DON_HANG_DA_GIAO_VALUE
+		    },
+		    include: [{
+		        model: DonHangChiTiet,
+		        as: 'chi_tiet_dh',
+		        where: {id_sp: id_sp},
+		        required: true
+		    }]
+		});
+		if(!hasPurchased){
+		    throw {status: 403, thong_bao: "Bạn cần mua sản phẩm này để viêt đánh giá"
+		    }
+		}
+		
+		const slugProduct = SanPhamCheck.slug;
+		const existingDanhGia = await DanhGia.findOne({
+			where: {id_user: id_user, id_sp: id_sp}
+		});
+		if(existingDanhGia){
+			throw {status: 409, thong_bao: "Bạn đã đánh giá sản phẩm này rồi"};
+		}
+		
+		const ngay_dg = new Date();
+		const newDg = await DanhGia.create({
+			id_sp: id_sp,
+			id_user: id_user,
+			noi_dung:noi_dung,
+			so_sao: so_sao,
+			ngay_dg: ngay_dg,
+			tinh_nang: tinh_nang,
+			chat_luong: chat_luong
+		},{transaction: t});
+		
+		const hinhDgs = hinhDgFiles.map(file=>({
+			id_dg: newDg.id,
+			url: processFilePath(file.path)
+		}));
+		if(hinhDgs.length > 0){
+			await IMG_DanhGia.bulkCreate(hinhDgs, {transaction: t});
+		}
+		
+		//bổ sug thêm cập nhật lại cột so_luong dg và diêm tb đánh giá của bảng sản phẩm
+		const avgResult = await DanhGia.findOne({
+			where: {id_sp: newDg.id_sp},
+			attributes :[
+				[Sequelize.fn('AVG', Sequelize.col('so_sao')),'ratingAvg'],
+				[Sequelize.fn('COUNT', Sequelize.col('id')), 'ratingCount']//đếm các dòng thỏa where
+			],
+			raw: true,
+			transaction: t
+		}) as unknown as RatingAggregateResult;
+		const diemTrungBinh = avgResult.ratingAvg ? parseFloat(avgResult.ratingAvg).toFixed(1) : Number(so_sao).toFixed(1);
+		const so_luong = avgResult.ratingCount ? Number(avgResult.ratingCount) : 0;
+		await SanPham.update({
+			diem_tb_dg: diemTrungBinh, so_luong_dg: so_luong
+		},{
+			where: {id: id_sp},
+		transaction: t})
+		await t.commit();
+		isCommited = true;
+		//dọn rac redis
+		const reviewStream = redisClient.scanIterator({
+			MATCH: `${REDIS_KEYS.REVIEW.PREFIX}slug:${slugProduct}*`,
+		});
+		for await  (const  key of reviewStream){
+			await redisClient.del(key);
+		}
+		const productStream = redisClient.scanIterator({
+			MATCH: `${REDIS_KEYS.PRODUCT.PREFIX}slug:${slugProduct}*`,
+		})
+		for await (const key of  productStream){
+			await redisClient.del(key);
+		}
+		return res.status(200).json({thong_bao: `Đã thêm đánh giá  thành công có ID là ${newDg.id}`, success: true});
+
+	} catch (error) {
+		if(!isCommited){
+			await t.rollback();
+		}
+		
+		await cleanUpfiles(req);
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi đánh giá sản phẩm";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi thêm đánh giá sản phẩm của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+		}
+})
+router.get<ParamsDanhGiaBySlug, {}, {},GetAllDanhGia>('/danh-gia/:slug', async(req,res)=>{
+	try {
+		const {slug} = req.params;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1) * limit;
+		const filterSao = req.query.sao ? Number(req.query.sao) : null;
+		const isHaveHinh = req.query.hinh;
+		const CACHE_KEY = `${REDIS_KEYS.REVIEW.PREFIX}slug:${slug}:page:${page}:limit:${limit}:sao:${filterSao}:hinh:${isHaveHinh}`;
+		const cachedata = await redisClient.get(CACHE_KEY);
+		if(cachedata){
+			return res.status(200).json(JSON.parse(cachedata));
+		}
+		const sanPham = await SanPham.findOne({
+		    where: {slug: slug},
+		    attributes: ['id','ten_sp','so_luong_dg','diem_tb_dg']
+		});
+		// const sanPham = await SanPham.findByPk(id,{
+		// 	attributes: ['id','ten_sp']
+		// });ol('id')), 'so_luong']],
+		if(!sanPham){
+			throw {status: 404, thong_bao: "Sản phẩm không tồn tại(id không đúng)"};
+		}
+		const id_sp = sanPham.id;
+		
+		const  [thongKeSao, tongCoHinh] = await Promise.all([
+			DanhGia.findAll({
+				where: {id_sp: id_sp},
+				attributes: ['so_sao', [Sequelize.fn('COUNT', Sequelize.col('id')), 'so_luong']],
+				group: ['so_sao'],
+				raw: true
+			}),
+			DanhGia.count({
+				where: {id_sp: id_sp},
+				include: [{
+					model: IMG_DanhGia,
+					as: 'img_dg',
+					required: true
+				}],
+				distinct: true//ko lặp dữ liêu
+			})
+		])
+		const summary = {
+			tong_danh_gia: sanPham.so_luong_dg || 0,
+			diem_trung_binh: sanPham.diem_tb_dg || 0,
+			co_hinh_anh: tongCoHinh,
+			chi_tiet_sao: {
+				"5": 0, "4": 0, "3": 0, "2": 0, "1": 0
+			}
+		}
+		// console.log(summary);
+		//ghép số  sao vào chi tiết sao  theo key
+		thongKeSao.forEach((item) => {
+			const typedItem = item as  unknown as ThongKeSaoResult;
+			summary.chi_tiet_sao[typedItem.so_sao as keyof typeof summary.chi_tiet_sao] =
+			Number(typedItem.so_luong);
+		});
+		const WhereClause: WhereOptions<DanhGia> = {id_sp: id_sp};
+		if(filterSao !== null && filterSao >= 1 && filterSao <= 5){
+			WhereClause.so_sao = filterSao
+		}
+
+		const {rows, count} = await DanhGia.findAndCountAll({
+			limit: limit,
+			offset: offset,
+			where: WhereClause,
+			include: [{
+				model: User,
+				as: 'nguoi_danh_gia',
+				attributes: ['ho_ten','hinh'],
+
+			},{
+				model: IMG_DanhGia,
+				as: 'img_dg',
+				attributes: ['url'],
+				required: isHaveHinh === 'true' ? true : false
+			}],
+			distinct: true,
+			order: [['createdAt','DESC']]
+		});
+		const totalPages = Math.ceil(count / limit);
+		
+		const resData = {
+			result: {
+				thong_ke: summary,
+				data: rows,
+				pagination: {
+					currentPage: page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				}
+			},
+			success: true
+		}
+		await redisClient.setEx(CACHE_KEY,REDIS_TTL.REVIEW_PRODUCT,JSON.stringify(resData));
+		return res.status(200).json(resData);
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi lấy danh sách đánh giá";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi đánh giá của sản phẩm theo  slug ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.get<{},{},{},GetAllDanhGia>('/shop/danh-gia',checkShop,async(req,res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1 ) * limit;
+
+		const {rows, count} = await DanhGia.findAndCountAll({
+			limit:limit,
+			offset: offset,
+			order: [['createdAt','DESC']],
+				include: [
+					{
+						model: SanPham,
+						where: {id_user:id_shop},
+						as: 'san_pham',
+						attributes: ['id','slug','img','gia','sale','da_ban','createdAt'],
+						required: true
+					},
+					{
+						model: User,
+						as: 'nguoi_danh_gia',
+						attributes: ['hinh','ho_ten']
+					},
+					{
+						model: IMG_DanhGia,
+						as: 'img_dg',
+						attributes: ['url']
+					}
+				],
+			distinct: true
+		});
+		const currentPages = Math.ceil(count / limit);
+		const result = {
+			data: rows,
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				currentPages: currentPages
+			}
+		};
+		return res.status(200).json({result, success: true});
+	} catch (error) {
+		
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ  khi lấy danh sách đánh giá cho shop";
+		if(status >=500){
+			logger.error(`[CRITICAL] Lỗi APi lấy danh sách đánh giá sản phẩm của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.put<traLoiDanhGiaSpInput['params'], {}, traLoiDanhGiaSpInput['body']>('/shop/danh-gia/:id',checkShop,validate(traLoiDanhGiaSpSchema),async(req,res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const id_dg = req.params.id;
+		const {phan_hoi} = req.body;
+		const danhGia = await DanhGia.findOne({
+			where: {id:id_dg},
+			include: [{
+				model: SanPham,
+				as:'san_pham',
+				where: {id_user: id_shop },//chốt chặn nếu sản phẩm đó ko  thuốc về shop thì no ko  trả về
+				attributes: ['slug'],
+				required: true//inner join
+			}]    
+		});
+		if(!danhGia){
+			throw {status: 404, thong_bao: "Dánh giá không tồn tại hoặc bạn không có quyền phản hồi"};
+		}
+		if(danhGia.phan_hoi){
+			throw {status: 409, thong_bao: "Bạn đã phản hồi rồi,không đc phép phản hồi tiếp"};
+		}
+		const danhGiaData = danhGia.get({ plain: true }) as {
+			san_pham: { slug: string };
+		};
+		const slugProduct = danhGiaData.san_pham.slug;
+		await danhGia.update({
+			phan_hoi: phan_hoi,
+			ngay_ph: new Date()
+		});
+		const reviewStream = redisClient.scanIterator({
+			MATCH: `${REDIS_KEYS.REVIEW.PREFIX}slug:${slugProduct}*`,
+		});
+		for await  (const  key of reviewStream){
+			await redisClient.del(key);
+		}
+		
+		return res.status(200).json({thong_bao: "Dã gửi phản hồi thành công", success: true})
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi gửi phản hồi đánh giá";
+		if(status >=500){
+			logger.error(`[CRITICAL] Lỗi APi phản hồi đánh giá sản phẩm của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+/// lấy sản phẩm theo  site
+router.get<{},{},{}, GetALLSanPHam>('/san-pham',async(req, res)=>{
+	try {
+		const limit = Number(req.query.limit) > 0? Number(req.query.limit) : 10;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const offset = (page -1) * limit;
+		const CACHE_KEY = `${REDIS_KEYS.PRODUCT.ALL}page:${page}:limit:${limit}`;
+		const cachedata = await redisClient.get(CACHE_KEY);
+		if(cachedata){
+			return res.status(200).json(JSON.parse(cachedata));
+		}
+		const {rows, count} = await SanPham.findAndCountAll({
+			limit: limit,
+			offset: offset,
+			where: {an_hien: AN_HIEN_VALUE, is_active:ACTIVATED_VALUE ,khoa: {[Op.ne]: KHOA_VALUE}},
+			order: [['createdAt','DESC']],
+				include: [{
+					model: SanPhamBienThe,
+					as: 'san_pham_bien_the',
+					attributes: ['id','id_sp','code','ten_bien_the','gia','so_luong','img','createdAt'],
+					order: [['id','DESC']]
+				},{
+					model: IMG_SanPham,
+					as: 'imgs',
+					attributes: ['url']
+				},{
+					model: ThuocTinhSP,
+					as: 'thuoctinhsp',
+					attributes: ['id_sp','id_tt','gia_tri'],
+						include: [{
+							model: ThuocTinh,
+							as: 'ten_thuoc_tinh',
+							attributes: ['id','ten_thuoc_tinh']
+						}]
+				},{
+					model: DM_San_Pham,
+					as: 'danh_muc',
+					attributes: ['ten_dm']
+				},{
+					model: ThuongHieu,
+					as: 'thuong_hieu',
+					attributes: ['ten_th']
+				}],
+			distinct: true
+		});
+		
+		const totalPages = Math.ceil(count / limit);
+		const danhSachSanPham = rows.map((sp)=>{
+				const item = sp.toJSON();
+				const phanTramGiam = item.sale;
+				const GiaGocCha = item.gia;
+				const giaDaGiamCha:number = phanTramGiam > 0 ? Math.round(GiaGocCha * (1 - phanTramGiam /100)) : GiaGocCha;
+				const bienTheDaXuLy = item.san_pham_bien_the?.map((bt: createBienTheSp)=>{
+					const giaGocBienThe = bt.gia;
+					const giaDaGiamBienThe = phanTramGiam > 0 ? Math.round(giaGocBienThe * (1 - phanTramGiam/ 100)) : giaGocBienThe;
+					return {
+						...bt,
+						gia_da_giam: giaDaGiamBienThe
+					}
+				}) || [];
+				return {
+					...item,
+					gia_da_giam: giaDaGiamCha,
+					san_pham_bien_the: bienTheDaXuLy,
+					thuoctinhsp: item.thuoctinhsp?.map((tt: ThuocTinhMap)=>({
+						id: tt.id_tt,
+						ten: tt.ten_thuoc_tinh.ten_thuoc_tinh,
+						gia_tri: tt.gia_tri
+					})) || []
+				}
+			})
+		
+		const resData = {
+			result: {
+				data: danhSachSanPham,
+				pagination: {
+					currentPage: page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				},
+				success: true
+			}
+		}
+		await redisClient.setEx(CACHE_KEY,REDIS_TTL.PRODUCT,JSON.stringify(resData));
+		
+		return res.status(200).json(resData);
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách all sản phẩm ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy danh sách sản phẩm"});
+	}
+})
+router.get<{},{},{}, GetALLSanPHam>('/san-pham-noi-bat',async(req, res)=>{
+	try {
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1 ) * limit;
+		const  CACHE_KEY = `${REDIS_KEYS.PRODUCT.OUTSTANDING}page:${page}:limit:${limit}`;
+		const  cachedata = await redisClient.get(CACHE_KEY);
+		if(cachedata){
+			return res.status(200).json(JSON.parse(cachedata));
+		}
+		const {rows, count} = await SanPham.findAndCountAll({
+			where: {noi_bat: NOi_BAT_VALUE, an_hien: AN_HIEN_VALUE, is_active: ACTIVATED_VALUE, khoa: {[Op.ne]: KHOA_VALUE}},
+			order: [['createdAt','DESC']],
+			limit: limit,
+			offset: offset
+		});
+		const danhSachSanPham = rows.map((sp)=>{
+				const item = sp.toJSON();
+				const phanTramGiam = item.sale;
+				const GiaGocCha = item.gia;
+				const giaDaGiamCha:number = phanTramGiam > 0 ? Math.round(GiaGocCha * (1 - phanTramGiam /100)) : GiaGocCha;
+				
+				return {
+					...item,
+					gia_da_giam: giaDaGiamCha,
+				}
+			})
+		const totalPages = Math.ceil(count/ limit);
+		const resData = {
+			result:{
+				data: danhSachSanPham,
+				pagination: {
+					currentPage : page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				},
+				success: true
+			}
+		}
+		await redisClient.setEx(CACHE_KEY, REDIS_TTL.PRODUCT, JSON.stringify(resData));
+		return res.status(200).json(resData);
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách  sản phẩm nổi bật ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy sản phẩm nổi bật", success:false});
+	}
+	
+})
+router.get<{},{},{}, GetALLSanPHam>('/san-pham-sale',async(req, res)=>{
+	try {
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1 ) * limit;
+		const CACHE_KEY = `${REDIS_KEYS.PRODUCT.SALE}page:${page}:limit:${limit}`;
+		const cachedata = await redisClient.get(CACHE_KEY);
+		if(cachedata){
+			return res.status(200).json(JSON.parse(cachedata));
+		}
+		const {rows, count} = await SanPham.findAndCountAll({
+			where: {sale: {[Op.gt]: 0}, an_hien: AN_HIEN_VALUE, is_active: ACTIVATED_VALUE, khoa: {[Op.ne]:  KHOA_VALUE}},
+			order: [['sale','DESC']],
+			limit: limit,
+			offset: offset
+		});
+		const danhSachSanPham = rows.map((sp)=>{
+				const item = sp.toJSON();
+				const phanTramGiam = item.sale;
+				const GiaGocCha = item.gia;
+				const giaDaGiamCha:number = phanTramGiam > 0 ? Math.round(GiaGocCha * (1 - phanTramGiam /100)) : GiaGocCha;
+				
+				return {
+					...item,
+					gia_da_giam: giaDaGiamCha,
+				}
+			})
+		
+		const totalPages = Math.ceil(count/ limit);
+		const resData = {
+			result : {
+				data: danhSachSanPham,
+				pagination: {
+					currentPage : page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				},
+				success: true
+			}
+		}
+		await redisClient.setEx(CACHE_KEY, REDIS_TTL.PRODUCT, JSON.stringify(resData));
+		return res.status(200).json(resData);
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách sản phẩm sale ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy sản phẩm nổi bật", success:false});
+	}
+	
+})
+router.get<ParamsDanhGiaBySlug,{},{},GetALLSanPHam>('/san-pham/:slug',async(req,res)=>{
+	try {
+		const {slug} = req.params;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1 ) * limit;
+		const  userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "unknow-ip";
+		const  viewTrackey =  `${REDIS_KEYS.VIEW_TRACK_KEY.PRODUCT}slug:${slug}:ip:${userIp}`;
+		const hasViewed = await redisClient.get(viewTrackey);
+		if(!hasViewed){
+			await SanPham.increment('luot_xem',{where:{slug, an_hien: AN_HIEN_VALUE, is_active: ACTIVATED_VALUE, khoa: {[Op.ne]: KHOA_VALUE}}});
+			await redisClient.setEx(viewTrackey,REDIS_TTL.PRODUCT_TRACK_KEY,'1');
+		}
+		const CACHE_KEY = `${REDIS_KEYS.PRODUCT.PREFIX}slug:${slug}:page:${page}:limit:${limit}`;
+		const  cachedata = await redisClient.get(CACHE_KEY);
+		if(cachedata){
+			return res.status(200).json(JSON.parse(cachedata));
+		}
+		const sanPham = await SanPham.findOne({
+			where: {an_hien: AN_HIEN_VALUE, slug: slug, is_active: ACTIVATED_VALUE},
+			include: [{
+				model: SanPhamBienThe,
+				as: 'san_pham_bien_the',
+				attributes: ['id','id_sp','code','ten_bien_the','gia','so_luong','img','createdAt'],
+				order: [['createdAt','DESC']]
+			},{
+				model: IMG_SanPham,
+				as: 'imgs',
+				attributes: ['url']
+			},{
+				model: ThuocTinhSP,
+				as: 'thuoctinhsp',
+				attributes: ['id_sp','id_tt','gia_tri'],
+					include: [{
+						model: ThuocTinh,
+						as: 'ten_thuoc_tinh',
+						attributes: ['id','ten_thuoc_tinh']
+					}]
+			},{
+				model: DM_San_Pham,
+				as: 'danh_muc',
+				attributes: ['ten_dm']
+			},{
+				model: ThuongHieu,
+				as: 'thuong_hieu',
+				attributes: ['ten_th']
+			},{
+				model: User,
+				as: 'shop',
+				attributes: ['ten_shop', 'id', 'hinh']
+			}]
+		});
+		
+		if(!sanPham){
+			throw {status: 404, thong_bao: "Sản phẩm không tồn tại nên không thể lấy chi tiết"};
+		}
+		const spItem = sanPham.toJSON();
+		const giaDaGiam:number = spItem.sale > 0 ? Math.round(spItem.gia * (1 - spItem.sale / 100)) : spItem.gia;
+		const bienTheDaXuLy = spItem.san_pham_bien_the?.map((bt: createBienTheSp)=>({
+			...bt,
+			gia_da_giam: spItem.sale > 0 ? Math.round(bt.gia * (1 - spItem.sale / 100)) : bt.gia
+		})) || [];
+		const formattedData = {
+			...spItem,
+			gia_da_giam: giaDaGiam,
+			san_pham_bien_the: bienTheDaXuLy,
+			thuoctinhsp: spItem.thuoctinhsp?.map((tt: ThuocTinhMap)=>({
+				id: tt.id_tt,
+				ten: tt.ten_thuoc_tinh.ten_thuoc_tinh,
+				gia_tri: tt.gia_tri
+			})) || []
+
+		};
+		const {rows, count} = await SanPham.findAndCountAll({
+			limit: limit,
+			offset: offset,
+			where: {an_hien: AN_HIEN_VALUE, id_dm: sanPham.id_dm,
+				id: {[Op.not]: sanPham.id}
+			},
+			attributes: ['id','code','ten_sp','slug','img','gia','sale','so_luong','da_ban','createdAt'],
+			order: [['createdAt','DESC']]
+		});
+		const totalPages = Math.ceil(count/ limit)
+		const SanPhamCungLoai = rows.map((sp)=>{
+				const item = sp.toJSON();
+				const phanTramGiam = item.sale;
+				const giaGocCungLoai = item.gia;
+				const giaDaGiamCungLoai = phanTramGiam > 0 ? Math.round(giaGocCungLoai * (1 - phanTramGiam/100)): giaGocCungLoai;
+				return {
+					...item,
+					gia_da_giam: giaDaGiamCungLoai
+				}
+		});
+		const resData = {
+			result : {
+				data: {
+					san_pham:formattedData,
+					san_pham_cung_loai: SanPhamCungLoai
+				},
+				pagination: {
+					currentPage: page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				},
+				success: true
+			}
+		}
+		await redisClient.setEx(CACHE_KEY,REDIS_TTL.PRODUCT_DETAIL,JSON.stringify(resData));
+		return res.status(200).json(resData);
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao  || "Lỗi máy chủ khi lấy cchi tiết sản phẩm";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi lấy chi tiết sản phẩm ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+//giỏ hàng 
+//dã test chạy ngon trên máy của tui
+router.get('/get-cart',checkAuth,async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const cart = await  GioHang.findOne({
+			where: {id_user: id_user},
+			include: [{
+				model: GioHangChiTiet,
+				as: 'gh_chi_tiet',
+				order: [['createdAt','DESC']],
+				include: [
+					{
+						model: SanPham,
+						as: 'san_pham',
+						attributes: ['id','ten_sp','slug','img','gia','sale','so_luong','an_hien'],
+						include: [{
+							model: User,
+							as: 'shop',
+							attributes: ['id','ten_shop','hinh']
+						}]
+					},
+					{
+						model: SanPhamBienThe,
+						as: 'bien_the',
+						attributes: ['id','ten_bien_the','gia','so_luong','img']
+					}
+				]
+			}]
+		});
+		if(!cart){
+			return res.status(200).json({data: [], success: true});
+		}
+		const cartItem = cart.toJSON();
+		const formattedData: CartItemWithShop[]  = cartItem.gh_chi_tiet.map((item: GetCartItem):CartItemWithShop | null=>{
+			//nếu sản phẩm bị xóa thì bỏ quá luôn nhá
+			if(!item.san_pham) return null;
+			const isBienThe = !!item.bien_the;//tonas tử nếu tồn tại là true chuyên thanhg dạng boolean 
+			const sanPhamInfo = isBienThe ? item.bien_the : item.san_pham;
+			const basePrice = sanPhamInfo.gia;
+			const sale  = item.san_pham.sale ;
+			const finalPrice = sale > 0 ? Math.round(basePrice * (1 - sale/100)) : basePrice;
+			const totalPrice = finalPrice * item.so_luong;
+			return {
+				cart_item_id: item.id,
+				id_sp: item.id_sp,
+				id_bt: isBienThe ? item.bien_the.id : null,
+				ten_sp: item.san_pham.ten_sp,
+				slug: item.san_pham.slug,
+				ten_bien_the: isBienThe ? item.bien_the.ten_bien_the : null,
+				img: (isBienThe && item.bien_the.img) ? item.bien_the.img : item.san_pham.img,
+				gia_goc: basePrice,
+				gia_hien_tai: finalPrice,
+				gia_tong: totalPrice,
+				sale: sale,
+				da_chon: item.da_chon,
+				so_luong: item.so_luong,
+				max_so_luong: sanPhamInfo.so_luong,
+				is_active: item.san_pham.an_hien !== AN_HIEN_VALUE && sanPhamInfo.so_luong > 0,
+				shop_info: item.san_pham.shop
+			};
+		}).filter((item: GetCartItem) => item !== null);
+		
+		//gom nhóm theo shop mỗi nhóm một mảng item
+		const groupCart: CartGroupByShop[] = [];
+		const shopMap = new Map<number, CartGroupByShop>();
+		formattedData.forEach((item)=>{
+			const shop = item.shop_info;
+			if(!shop) return ;//skip nếu lỗi ko có dữ liệu
+			const {shop_info, ...itemData} = item;
+			if(!shopMap.has(shop.id)){
+				//th 1 nếu có chưa có shop  thì tạo mới
+				const newShopEntry: CartGroupByShop = {//nó phải giông interface truyền ở treen
+
+					id_shop: shop.id,
+					ten_shop: shop.ten_shop,
+					hinh_shop: shop.hinh,
+					items: [itemData]
+				};
+				shopMap.set(shop.id, newShopEntry);
+				groupCart.push(newShopEntry);
+			}else{//dó đã check has nên để dấu ! an toàn
+				shopMap.get(shop.id)!.items.push(itemData);
+			}
+
+		})
+		return res.status(200).json({data: groupCart, success: true});
+
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách giỏ hàng của  user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy  giỏ hàng", success: false});
+	}
+})
+router.put<{}, {}, toggleCartInput['body']>('/cart/toggle',checkAuth, validate(toggleCartSchema), async(req , res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const {id_gh_ct, da_chon} = req.body;
+		const gioHang  = await  GioHang.findOne({
+			where: {id_user: id_user, },
+			attributes: ['id']
+		});
+		if(!gioHang){
+			throw {status: 404, thong_bao: "giỏ hàng không tồn tại"};
+		}
+		const whereCondition: WhereOptions<GioHangChiTiet> = {
+			id: {[Op.in]: id_gh_ct},
+			id_gh: gioHang.id//chỉ update những cái thuôc giỏ hàng này
+		};
+		
+		const updateData = da_chon !== undefined ? {da_chon: da_chon} : {da_chon: literal('NOT da_chon')}////sql thành da_chon = NOt da_chon //dạo lại giá trị
+		const  [updateCount] = await GioHangChiTiet.update(
+			updateData,
+			{where: whereCondition}
+		);
+		if(updateCount === 0){
+			throw {
+                status: 404, 
+                thong_bao: "Không tìm thấy sản phẩm trong giỏ hàng hoặc sản phẩm không thuộc về bạn"
+            };
+		} 
+		//newu value này dạng bolean
+		//nếu fe gửi đa chọn thì lấy da chọn ko thì đảo nguocj trạng thái củ
+		
+		
+		return res.status(200).json({thong_bao: "cập nhật trạng thái thành công",
+			data: {
+				id: id_gh_ct,
+				da_chon: da_chon//trả về undifine là toggle
+			}, success: true
+		})
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi chọn giỏ hàng chi  tiet";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi chọn  giỏ hàng để thanh toán của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+	}
+})
+//api dùng để thêm vào giỏ hàng
+router.post<{},{},createCartInput>('/add-to-cart',checkAuth,validate(createCartSchema), async(req, res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const userPayload = req.user as AuthUser;
+		const  id_user = userPayload.id;
+		const {id_sp, id_bt, so_luong} = req.body;
+		const sanPham = await SanPham.findByPk(id_sp);
+		if(!sanPham){
+			throw {status: 404, thong_bao: "Sản phẩm không tồn tại"}
+		}
+		let maxStock = sanPham.so_luong;
+		
+		if(id_bt){
+			const bienThe = await SanPhamBienThe.findOne({
+				where: {id: id_bt, id_sp: id_sp}
+			});
+			if(!bienThe){
+				throw {status: 404, thong_bao: "Biến thể không tồn tại"};
+			}
+			maxStock = bienThe.so_luong;
+		}
+		if(so_luong > maxStock){
+			throw {status: 400, thong_bao:  `Kho chỉ còn ${maxStock} sản phẩm, bạn không thể thêm ${so_luong}`}
+		}
+		const [cart, created] = await GioHang.findOrCreate({
+			where: {id_user: id_user},
+			defaults: {id_user: id_user},
+			transaction: t
+		});
+		//findorcreat là  nếu tìm thấy thì lấy cái có sãng không tìm thấy thì tạo cái mới
+		// created trả về bolean true false nếu giỏ hàng đc tạo mới false nếu lấy cái có sẵng
+		// console.log(created);
+		const existingItemCart = await GioHangChiTiet.findOne({
+			where: {
+				id_gh: cart.id,
+				id_sp: id_sp,
+				id_bt: id_bt || null,
+			}
+		});
+		if(existingItemCart){
+			const newSoLuong = existingItemCart.so_luong + so_luong;
+			if(newSoLuong > maxStock){
+				throw {status: 400, thong_bao:  `Bạn chỉ có thể thêm tối đa ${maxStock - existingItemCart.so_luong} sản phẩm nữa.`}
+			}
+			await existingItemCart.increment('so_luong',{by: so_luong, transaction: t});
+		}else{
+			await GioHangChiTiet.create({
+				id_gh: cart.id,
+				id_sp: id_sp,
+				id_bt: id_bt || null,
+				so_luong: so_luong,
+				da_chon: 0
+			},{transaction: t})
+		}
+		await t.commit();
+		return res.status(200).json({thong_bao: "Đã thêm vào giỏ  hàng", success: true});
+	} catch (error) {
+		const err =error as  CustomError;
+		await t.rollback();
+		const status  = err.status || 500;
+		const  thong_bao = err.thong_bao || "Lỗi máy chủ khi thêm vào giỏ hàng";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi thêm vào giỏ hàng của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.post<{}, {}, MergeCartInput>('/add-to-cart/merge', checkAuth, validate(mergeCartSchema), async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const userPayload = req.user as AuthUser;
+        const id_user = userPayload.id;
+        const { items } = req.body; // Mảng các sản phẩm từ LocalStorage
+
+        // 1. Tìm hoặc tạo giỏ hàng cho User này
+        const [cart] = await GioHang.findOrCreate({
+            where: { id_user: id_user },
+            defaults: { id_user: id_user },
+            transaction: t
+        });
+
+        // 2. Duyệt qua từng item từ LocalStorage gửi lên
+        for (const item of items) {
+            const { id_sp, id_bt, so_luong } = item;
+
+            // A. Kiểm tra sản phẩm và biến thể có tồn tại + lấy tồn kho
+            const sanPham = await SanPham.findByPk(id_sp, { transaction: t });
+            if (!sanPham) continue; // Nếu SP ko tồn tại thì bỏ qua, không throw lỗi để chạy tiếp món khác
+
+            let maxStock = sanPham.so_luong;
+            if (id_bt) {
+                const bienThe = await SanPhamBienThe.findOne({
+                    where: { id: id_bt, id_sp: id_sp },
+                    transaction: t
+                });
+                if (!bienThe) continue; // Biến thể sai thì bỏ qua
+                maxStock = bienThe.so_luong;
+            }
+
+            // B. Kiểm tra xem trong DB đã có món này chưa
+            const existingItem = await GioHangChiTiet.findOne({
+                where: {
+                    id_gh: cart.id,
+                    id_sp: id_sp,
+                    id_bt: id_bt || null 
+                },
+                transaction: t
+            });
+
+            if (existingItem) {
+                // Trường hợp ĐÃ CÓ: Cộng dồn số lượng
+                const totalQty = existingItem.so_luong + so_luong;
+                
+                // Logic thông minh: Nếu tổng > tồn kho, thì set bằng maxStock luôn (để bán được hàng)
+                // Thay vì báo lỗi chặn luôn
+                const finalQty = totalQty > maxStock ? maxStock : totalQty;
+
+                if (existingItem.so_luong < finalQty) { // Chỉ update nếu số lượng tăng lên
+                     await existingItem.update({ so_luong: finalQty }, { transaction: t });
+                }
+            } else {
+                // Trường hợp CHƯA CÓ: Tạo mới
+                // Nếu số lượng gửi lên > tồn kho -> Chỉ lấy bằng tồn kho
+                const finalQty = so_luong > maxStock ? maxStock : so_luong;
+
+                if (finalQty > 0) { // Còn hàng mới thêm
+                    await GioHangChiTiet.create({
+                        id_gh: cart.id,
+                        id_sp: id_sp,
+                        id_bt: id_bt || null,
+                        so_luong: finalQty,
+                        da_chon: 0 // Mặc định là chưa chọn
+                    }, { transaction: t });
+                }
+            }
+        }
+
+        await t.commit();
+        return res.status(200).json({ success: true, thong_bao: "Đồng bộ giỏ hàng thành công" });
+
+    } catch (error) {
+        await t.rollback();
+        const err = error as CustomError;
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi dồng bộ giỏ hàng khi  đang nhập của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+        return res.status(status).json({ 
+            success: false, 
+            thong_bao: "Lỗi khi đồng bộ giỏ hàng" 
+        });
+    }
+});
+//dùng cho nút + - nhập để update số lượng
+// có roll back vì tránh để sai dữ liệu 1 là làm  2 không làm
+router.put<updateCartInput['params'],{},updateCartInput['body']>('/update-cart/:id',checkAuth,validate(updateCartSchema),async(req, res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const userPayload = req.user  as AuthUser;
+		const id_user = userPayload.id;
+		const id_gh = req.params.id;
+		const {so_luong} = req.body;
+		const cartItem = await GioHangChiTiet.findOne({
+			where: {id: id_gh},
+			include: [{
+				model: GioHang,
+				as: 'gio_hang',
+				where: {id_user: id_user}//join để ccheck quyền sở hữu
+			},{
+				model: SanPham,
+				as: 'san_pham',
+				attributes: ['id','so_luong']
+			},
+			{
+				model: SanPhamBienThe,
+				as: 'bien_the',
+				attributes: ['id','so_luong']
+			}
+		],
+		transaction: t});
+
+		if(!cartItem){
+			throw {status: 404, thong_bao: "Sản phẩm không có trong giỏ"};
+		}
+		if(so_luong <= 0){
+			await cartItem.destroy({transaction: t});
+			await t.commit();
+			return res.status(200).json({thong_bao: "Đã xóa sản phẩm khỏi giỏ hàng", success: true});
+		}
+		let maxStock = 0;
+		const itemData = cartItem.toJSON();
+		if(itemData.id_bt){
+			//th sp bị xóa khi còn trong gio  hàng
+			if(!itemData.bien_the){
+				await cartItem.destroy({transaction: t});
+				await t.commit();
+				return res.status(404).json({thong_bao: "Biến thể không tồn tại", success: false});
+			}
+			maxStock = itemData.bien_the.so_luong;
+		}else{
+			//check sp thuong
+		   
+			if(!itemData.san_pham){
+				await cartItem.destroy({transaction: t});
+				await t.commit();//commit tại đây luôn do  việc xóa là đã xong vì phải xóa mới báo lỗi
+				return res.status(404).json({thong_bao: "Sản phẩm không tồn tại", success: false});
+			}
+			maxStock = itemData.san_pham.so_luong;
+		}
+		
+		if(maxStock < so_luong){
+			throw {status: 400, thong_bao: `Kho chỉ còn ${maxStock} sản phẩm. Bạn đang yêu cầu ${so_luong}.`};
+		}
+		await cartItem.update({so_luong: so_luong},{ transaction: t });
+		await t.commit();
+		return res.status(200).json({thong_bao: "Đã cập nhật số lượng sản phẩm", success: true});
+	} catch (error) {
+		await t.rollback();//rollback nếu có lỗi
+		const err = error as  CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi update số lượng giỏ hàng";
+		if(status >= 500){
+			logger.error(`[CRITICAL] cập nhật số lương hoặc sản phẩm  vào giỏ hàng ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.delete<cartIdInput>('/delete-cart/:id',checkAuth, validate(cartIdSchema),async(req, res)=>{
+	try {
+		const userPayload = req.user as  AuthUser;
+		const id_user = userPayload.id;
+		const id_gh = req.params.id;
+		const gioHangCT = await GioHangChiTiet.findOne({
+			where: {
+				id: id_gh,
+			},
+			include: [{
+				model: GioHang,
+				as: 'gio_hang',
+				where: {id_user: id_user}
+			}]
+		});
+		if(!gioHangCT){
+			throw {status: 404, thong_bao: "Không tìm thấy sản phẩm để xóa"}
+		}
+		await gioHangCT.destroy();
+		return res.status(200).json({thong_bao: "Đã xóa sản phẩm khỏi giỏ hang", success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi xóa sản phẩm khỏi giỏ hàng";
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi xóa  1 sản phẩm khỏi giỏ hàng  của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.delete('/delete-all-cart',checkAuth,async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user =  userPayload.id;
+		const cart = await GioHang.findOne({
+				where: {id_user: id_user}
+		});
+		if(!cart){
+			return res.status(200).json({thong_bao: "Giỏ hàng đã trống", success: true});
+		}
+		const deleteCount = await GioHangChiTiet.destroy({
+			where: {id_gh: cart.id}
+		});
+		if(deleteCount === 0){
+			return res.status(200).json({thong_bao: "Giỏ hàng của bạn đang trống, không có gì để xóa", success: true});
+		}
+		return res.status(200).json({thong_bao: `Đã xóa tất cả  gồm có ${deleteCount} sản phẩm khỏi giỏ hàng`, success: true});
+
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi xóa  hết giỏ hàng của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi xóa toàn bộ giỏ hàng", success: false});
+
+	}
+})
+//xem thông tin của một  shop trung với trang sản phẩm với shop
+router.get<ParamSanPhamIdInput, {}, {}>('/shops/:id/profile', validate(sanPhamIdSchema), async(req, res)=>{
+	try {
+		const  id_shop = Number(req.params.id);
+		const  shop = await User.findOne({
+			where: {id: id_shop},
+			attributes: ['id','ten_shop','hinh','dien_thoai']
+		})
+		if(!shop){
+			throw {status : 404 , thong_bao: "Shop không tồn tại"};
+		}
+		const result = {
+			data: shop,
+		};
+		return res.status(200).json({result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const  status = err.status || 500;
+		const  thong_bao = err.thong_bao || "Lỗi máy chủ khi lấy sản phẩm theo  shop";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi xem thông tin của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+		}
+		return res.status(status).json({thong_bao,success: false});
+	}
+})
+//xem sản phẩm của 1 shop  nào đó
+router.get<ParamSanPhamIdInput, {}, {}, GetALLSanPHam>('/shops/:id/san-pham', validate(sanPhamIdSchema), async(req, res)=>{
+	try {
+		const  id_shop = Number(req.params.id);
+		const limit = Number(req.query.limit) > 0? Number(req.query.limit) : 10;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const offset = (page -1) * limit;
+		await validateForeignKey(id_shop,User,"Shop");
+		const {rows, count} = await SanPham.findAndCountAll({
+			where: {an_hien: AN_HIEN_VALUE, id_user: id_shop, is_active: ACTIVATED_VALUE, khoa: {[Op.ne]: KHOA_VALUE}},
+			order: [['createdAt','DESC']],
+			limit: limit,
+			offset: offset
+		});
+		const danhSachSanPham = rows.map((sp) => {
+            const item = sp.toJSON();
+            const phanTramGiam = item.sale || 0;
+            const GiaGocCha = item.gia || 0;
+            
+            // Công thức nhân trước chia sau chống sai số Float
+            const giaDaGiamCha: number = phanTramGiam > 0 ? Math.round((GiaGocCha * (100 - phanTramGiam)) / 100) : GiaGocCha;
+            
+            return {
+                ...item,
+                gia_da_giam: giaDaGiamCha,
+            }
+        });
+		const totalPages = Math.ceil(count / limit);
+		const result = {
+			data: danhSachSanPham,
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			}
+		};
+		return res.status(200).json({result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const  status = err.status || 500;
+		const  thong_bao = err.thong_bao || "Lỗi máy chủ khi lấy sản phẩm theo  shop";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi xem sản phẩm của 1 shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+		}
+		return res.status(status).json({thong_bao,success: false});
+	}
+})
+//thêm sản phẩm bởi shop
+router.get<{},{},{}, GetALLSanPHam>('/shop/san-pham',checkShop,async(req: Request, res: Response)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+
+		const limit = Number(req.query.limit) > 0? Number(req.query.limit) : 10;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const offset = (page -1) * limit;
+		const {rows, count} = await SanPham.findAndCountAll({
+			limit: limit,
+			where: {id_user: id_user},
+			offset: offset,
+			order: [['createdAt','DESC']],
+				include: [{
+					model: SanPhamBienThe,
+					as: 'san_pham_bien_the',
+					attributes: ['id','id_sp','code','ten_bien_the','gia','so_luong','img','createdAt'],
+					order: [['id','DESC']]
+				},{
+					model: IMG_SanPham,
+					as: 'imgs',
+					attributes: ['url']
+				},{
+					model: ThuocTinhSP,
+					as: 'thuoctinhsp',
+					attributes: ['id_sp','id_tt','gia_tri'],
+						include: [{
+							model: ThuocTinh,
+							as: 'ten_thuoc_tinh',
+							attributes: ['id','ten_thuoc_tinh']
+						}]
+				},{
+					model: DM_San_Pham,
+					as: 'danh_muc',
+					attributes: ['ten_dm']
+				},{
+					model: ThuongHieu,
+					as: 'thuong_hieu',
+					attributes: ['ten_th']
+				}],
+			distinct: true
+		});
+		
+		const totalPages = Math.ceil(count / limit);
+		const danhSachSanPham = rows.map((sp)=>{
+				const item = sp.toJSON();
+				const phanTramGiam = item.sale;
+				const  giaDaGiamCha = phanTramGiam > 0 ? Math.round(item.gia * (1 - phanTramGiam / 100)) : item.gia;
+				const bienTheDaXuLy = item.san_pham_bien_the?.map((bt: createBienTheSp)=>{
+					const giaGocBienThe = bt.gia;
+					const giaDaGiamBienThe = phanTramGiam > 0 ? Math.round(giaGocBienThe * (1 - phanTramGiam /100)) : giaGocBienThe;
+					return {
+						...bt,
+						gia_da_giam: giaDaGiamBienThe
+					}
+				}) || [];
+				return {
+					...item,
+					gia_da_giam: giaDaGiamCha,
+					san_pham_bien_the: bienTheDaXuLy,
+					thuoctinhsp: item.thuoctinhsp?.map((tt: ThuocTinhMap)=>({
+						id: tt.id_tt,
+						ten: tt.ten_thuoc_tinh.ten_thuoc_tinh,
+						gia_tri: tt.gia_tri
+					})) || []
+				}
+			})
+		
+		const result = {
+			data: danhSachSanPham,
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			}
+		};
+		
+		return res.status(200).json({result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi xem danh sách  sản phẩm của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy danh sách sản phẩm"});
+	}
+})
+router.post<{},{}, createSanPhamInput>('/shop/san-pham',checkShop,uploadMiddleware, validate(createSanPhamSchema),async(req,res)=>{
+    const t = await sequelize.transaction();//tạo cái nay để lưu dũ liệu dồng bộ ở các bnagr
+    const createdFile: string[] = [];
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		
+		const  {ten_sp, code, gia,sale, so_luong, xuat_xu, dvctn, dvt, mo_ta, an_hien,id_dm, id_th, thuoc_tinh, bien_the} = req.body;
+		const files = req.files as MulterFieldFiles;
+		const hinhSpFiles = files?.['hinh_sp'] || [];
+		const fristHinh = hinhSpFiles?.[0];
+		if(!gia || !so_luong){
+			throw {status: 400, thong_bao: "Bạn chưa nhập giá với số lượng sản phẩm"}
+		}
+		
+		if(!fristHinh){
+			throw {status: 400, thong_bao: "Bạn cần chọn ít nhất 1 hình"};
+		}
+		const processResult = await processSanPhamImgThumanail(fristHinh.path, fristHinh.filename );
+		if(processResult) createdFile.push(processResult);
+		const thumnailUrl = processFilePath(processResult);
+		// if(!thumnailUrl){
+		// 	throw {status: 404, thong_bao:" Lỗi đồng bộ không thể tạo đường dẫn file"};
+		// }
+		//tạo mã sku tự đông nếu ko thằng nào nhập
+		
+		let finalCode = code || "";
+		if(!finalCode){
+			finalCode = generateSku();
+		}else{
+			if(finalCode.length <= 4){
+				throw {status: 400, thong_bao: "Mã sku không đc dưới 4 ký tự"}
+			}
+		}
+		const existing = await SanPham.findOne({
+			where: {[Op.or]: [{ten_sp: ten_sp}, {code: finalCode}]}
+		});
+		if(existing){
+			if(existing.ten_sp === ten_sp){
+				throw {status: 409, thong_bao: "Tên sản phẩm đã tồn tại mời nhập tên khác"};
+			}
+			if(existing.code === finalCode){
+				throw {status: 409, thong_bao: "Mã Sku đã tồn tại mời nhập cái khác"};
+			}
+		}
+		const slug = generateSlug(ten_sp);
+		const existingSlug = await SanPham.findOne({
+			where: {slug: slug}
+		});
+		if(existingSlug){
+			throw {status: 409, thong_bao: "Slug đã tồn tại vui lòng điều chỉnh lại tên sản phẩm"};
+		}
+		const newIdDM = await validateForeignKey(id_dm, DM_San_Pham, "Loại danh mục");
+		const newIdTT = await validateForeignKey(id_th, ThuongHieu, "Loại thương hiệu");
+		const newSp = await SanPham.create({
+			ten_sp: ten_sp,
+			code: finalCode,
+			slug: slug,
+			img: thumnailUrl,
+			gia: gia,
+			sale: sale,
+			so_luong: so_luong,
+			xuat_xu: xuat_xu || null,
+			dvctn: dvctn ,
+			mo_ta: mo_ta,
+			dvt: dvt,
+			an_hien :an_hien,
+			id_user: id_user,
+			id_dm: newIdDM,
+			id_th: newIdTT
+		}, {transaction: t});
+		//tạo album ảnh cho sản phẩm
+		const hinhSps = hinhSpFiles.map(file=>({
+			id_sp: newSp.id,
+			url: processFilePath(file.path)
+		}));
+		//tạo nhiều bản con trong 1 query là bulkCreate
+		await IMG_SanPham.bulkCreate(hinhSps, {transaction: t});
+		if(thuoc_tinh && thuoc_tinh.length > 0){
+			const thuocTinhData = await Promise.all(thuoc_tinh.map(async(item: createThuocTinhSp)=>{
+				const newTT = await validateForeignKey(item.id_tt, ThuocTinh, "Loại thuộc tính");
+				return {
+					id_sp: newSp.id,
+					id_tt: newTT,
+					gia_tri: item.value,
+				}
+				
+			
+			}
+			)
+		);
+			await  ThuocTinhSP.bulkCreate(thuocTinhData, {transaction: t});
+		}
+		if(bien_the && bien_the.length > 0){
+			//th người dùng gửi lên  sku
+			const skuSet = new Set<string>();//khoiwr taoj thuoc tinh set de tim gia tri trung lap
+			
+			for(const item of bien_the){
+				if(item.code){
+					if(skuSet.has(item.code)){//nó sễ kiemr trả trong sku
+						throw {status: 400, thong_bao: "Bạn nhập mã SKU bị trùng lặp"}
+					}
+					skuSet.add(item.code)
+				}
+			}
+			
+			const bienTheData = await Promise.all(
+					bien_the.map(async(item: createBienTheSp, index: number)=>{
+						const bienTheFileKey = `hinh_bien_the_${index}`;
+						const bienTheFiles = files[bienTheFileKey]?.[0];
+						const bienTheHinhPath = bienTheFiles ? processFilePath(bienTheFiles) : null;
+							let finalCodeBienThe = item.code 
+							if(!finalCodeBienThe){
+								finalCodeBienThe = generateSku();
+							}
+							if(!item.gia || !item.so_luong){
+								throw {status: 400, thong_bao: "giá và số lượng của biến thể ko đc để trống"}
+							}
+							const existingBienThe = await SanPhamBienThe.findOne(
+								{
+									where: {code: finalCodeBienThe}  
+								}
+							);
+							if(existingBienThe){
+								throw {status: 409, thong_bao: "mã Sku của biến thể ko đc trùng nhau  vui lòng kiêm trả lại"}
+							}
+							return {
+								id_sp: newSp.id,
+								ten_bien_the: item.ten_bien_the,
+								code: finalCodeBienThe,
+								gia: item.gia,
+								so_luong: item.so_luong,
+								img: bienTheHinhPath
+							};
+					}));
+			
+			await SanPhamBienThe.bulkCreate(bienTheData, {transaction: t});
+		}
+		await t.commit();
+		return res.status(200).json({thong_bao: ` Đã thêm sản phẩm có ID là ${newSp.id}`, success: true});
+    } catch (error) {
+	   await  t.rollback();//roll bac dọn dẹp
+	   await cleanUpfiles(req);
+	   if(createdFile.length > 0){
+		await Promise.all(createdFile.map(filePath=>{
+			return fs.promises.unlink(filePath).catch(err=>{
+				console.warn(` Không xóa được file optimized ${filePath}:`, err.message);
+				return Promise.resolve();
+			})
+		}))  
+	   }
+	   const err = error as CustomError;
+	   const status = err.status || 500;
+	   const thong_bao = err.thong_bao || "LỖi máy chủ khi thêm sản phẩm mới";
+	   if(status >= 500){
+	   		logger.error(`[CRITICAL] Lỗi APi thêm sản phẩm của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+	   }
+	   return res.status(status).json({thong_bao, success: false});
+    }
+})
+router.get<updateSanPhamInPut['params']>('/shop/san-pham/:id',checkShop,validate(sanPhamIdSchema),async(req, res)=>{
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const sanPham = await SanPham.findOne(
+			{
+				where:{id_user: id_user, id: id},
+				attributes: ['id','ten_sp','code','slug','img','gia','sale','so_luong','da_ban','luot_xem','diem_tb_dg','so_luong_dg','xuat_xu','dvctn','dvt','noi_bat','mo_ta','an_hien','id_dm','id_th','createdAt'],
+					include: [{
+						model: SanPhamBienThe,
+						as: 'san_pham_bien_the',
+						attributes: ['id','id_sp','code','ten_bien_the','gia','so_luong','img','createdAt'],
+						order: [['id','DESC']]
+					},{
+						model: IMG_SanPham,
+						as: 'imgs',
+						attributes: ['url']
+					},{
+						model: ThuocTinhSP,
+						as: 'thuoctinhsp',
+						attributes: ['id_sp','id_tt','gia_tri'],
+							include: [{
+								model: ThuocTinh,
+								as: 'ten_thuoc_tinh',
+								attributes: ['id','ten_thuoc_tinh']
+							}]
+					},{
+						model: DM_San_Pham,
+						as: 'danh_muc',
+						attributes: ['ten_dm']
+					},{
+						model: ThuongHieu,
+						as: 'thuong_hieu',
+						attributes: ['ten_th']
+					}],
+			}
+		);
+		if(!sanPham){
+			throw {status: 404 , thong_bao: "Sản phẩm không tồn tại vui lòng kiểm trả lại"};
+		}
+		const sanPhamData = sanPham.toJSON();
+		const formattedThuocTinh = sanPhamData.thuoctinhsp.map((tt: ThuocTinhMap)=>({
+			id: tt.id_tt,
+			ten: tt.ten_thuoc_tinh.ten_thuoc_tinh,
+			gia_tri: tt.gia_tri	
+		}));
+	
+		const finalResult = {
+			...sanPhamData,
+			thuoctinhsp: formattedThuocTinh
+		}
+		return res.status(200).json({data: finalResult, success: true});
+
+	} catch (error) {
+		const err = error as  CustomError;
+		
+		const status  = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi lấy chi tiết sản phẩm";
+		if(status >= 500){
+	   		logger.error(`[CRITICAL] Lỗi APi lấy chi tiết 1 sản phẩm  của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+	   }
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.put<updateSanPhamInPut['params'],{},updateSanPhamInPut['body']>('/shop/san-pham/:id',checkShop,uploadMiddleware,validate(updateSanPhamSchema),async(req, res)=>{
+	const t = await sequelize.transaction();
+	let  isCommit = false;
+	const oldFileToDelete: string[] = [];
+	const newFileCreated: string[] = [];
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const {ten_sp, code, gia, so_luong, sale,xuat_xu, dvctn, dvt, mo_ta, an_hien, id_dm, id_th, thuoc_tinh,bien_the} = req.body;
+		const files = req.files as MulterFieldFiles;
+		const hinhSpFiles = files?.['hinh_sp'] || [];
+		const fristHinh = hinhSpFiles?.[0];
+		const sanPham = await SanPham.findOne({
+			where: {id: id, id_user: id_user}
+		});
+		if(!sanPham){
+			throw {status: 404, thong_bao: "Không tìm thấy sản phẩm để cập nhật"};
+		}
+		const allowedUpdate: allowedUpdateSanPham = {};
+		const slugOld = sanPham.slug;
+		if(sanPham.ten_sp !== ten_sp){
+			const existingTensp = await SanPham.findOne({
+				where: {
+					ten_sp: ten_sp,
+					id: {[Op.not]: sanPham.id}
+				}
+			})
+			if(existingTensp){
+				throw {status: 409, thong_bao: "Tên sản phẩm đã tồn tại vui  lòng nhập cái khác"};
+			}
+			allowedUpdate.ten_sp = ten_sp
+			const slug = generateSlug(ten_sp);
+			const existingSlug = await SanPham.findOne({
+				where: {slug: slug,
+					id: {[Op.not]: sanPham.id}
+				}
+			});
+			if(existingSlug){
+				throw {status: 409, thong_bao: "Vui lòng chỉnh lại  tên sản phẩm do slug đã bị trùng với một sản phẩm khác"};
+			}
+			allowedUpdate.slug = slug;
+		}
+		let finalCode = code;
+		if(sanPham.code !== finalCode){
+			if(!finalCode){
+				finalCode = generateSku();
+			}
+			const existingCode = await SanPham.findOne({
+				where: {code: finalCode,
+					id: {[Op.not]: sanPham.id}
+				}
+			});
+			if(existingCode){
+				throw {status: 409, thong_bao: "Sku sản phẩm đã tồn tại vui lòng nhập cái khác"};
+			}
+			allowedUpdate.code = finalCode;
+		}
+		if(sanPham.gia !== gia){
+			if(!gia){
+				throw {status: 400, thong_bao: "Bạn vui lòng nhập giá cho sản phẩm"};
+			}
+			allowedUpdate.gia = gia;
+		}
+		if(sanPham.sale !== sale && sale !== undefined){
+			allowedUpdate.sale = sale
+		}
+		if(sanPham.so_luong !== so_luong){
+			if(!so_luong){
+				throw {status: 409, thong_bao: "Bạn vui long nhập số lượng của sản phẩm"};
+			}
+			allowedUpdate.so_luong = so_luong;
+		}
+		if(sanPham.xuat_xu !== xuat_xu && xuat_xu !== undefined){
+			allowedUpdate.xuat_xu = xuat_xu
+		}
+		if(sanPham.dvctn !== dvctn && dvctn !== undefined){
+			allowedUpdate.dvctn = dvctn;
+		}
+		if(sanPham.dvt !== dvt ){
+			allowedUpdate.dvt = dvt;
+		}
+		if(sanPham.mo_ta !== mo_ta){
+			allowedUpdate.mo_ta = mo_ta;
+		}
+		if(sanPham.id_dm !== id_dm){
+			const newidDm = await validateForeignKey(id_dm, DM_San_Pham,"Loại danh mục");
+			allowedUpdate.id_dm = newidDm;
+		}
+		if(sanPham.id_th !== id_th){
+			const newIdTH = await validateForeignKey(id_th, ThuongHieu, "Loại thương hiệu");
+			allowedUpdate.id_th = newIdTH;
+		}
+		if(normalizeBoolean(sanPham.an_hien) !== an_hien){
+			allowedUpdate.an_hien = an_hien;
+		}
+		if(fristHinh){
+			const processResult = await processSanPhamImgThumanail(fristHinh.path, fristHinh.filename);
+			if(processResult) newFileCreated.push(processResult);
+			const thumnailUrl = processFilePath(processResult);
+			// if(!thumnailUrl){
+			// 	throw {status: 400, thong_bao: "Lỗi đồng bộ không thể tạo đường dẫn file"};
+			// }
+			allowedUpdate.img = thumnailUrl;
+			if(sanPham.img){
+				const oldAbsolutePath = covertWebPathToAbsolutePath(sanPham.img)
+				oldFileToDelete.push(oldAbsolutePath);
+			}
+		}
+		if(Object.keys(allowedUpdate).length > 0){
+			await sanPham.update(allowedUpdate, {transaction: t});	
+		}
+		if(hinhSpFiles.length > 0 ){
+			const currentImg = await IMG_SanPham.findAll({
+				where: {id_sp: sanPham.id},
+				attributes: ['url']
+			});
+			currentImg.forEach(img=>{
+				const absolutePath = covertWebPathToAbsolutePath(img.url);
+				oldFileToDelete.push(absolutePath);
+			});
+			await IMG_SanPham.destroy({ where: { id_sp: sanPham.id }, transaction: t});
+			const hinhSps = hinhSpFiles.map(file=>({
+				id_sp: sanPham.id,
+				url: processFilePath(file.path)
+			}));
+			await IMG_SanPham.bulkCreate(hinhSps, {transaction: t});
+		}
+		if(thuoc_tinh){
+			await ThuocTinhSP.destroy({where: {id_sp: sanPham.id}, transaction: t});
+			if(thuoc_tinh.length > 0){
+				const thuocTinhData = await Promise.all(thuoc_tinh.map(async(item: createThuocTinhSp)=>{
+					const newTT = await validateForeignKey(item.id_tt, ThuocTinh, "Loại thuộc tính");
+					return {
+						id_sp: sanPham.id,
+						id_tt: newTT,
+						gia_tri: item.value
+					}
+				}));
+				await ThuocTinhSP.bulkCreate(thuocTinhData, {transaction: t});
+			}
+		}
+		if(bien_the){
+			const CurrentBienThe = await SanPhamBienThe.findAll({
+				where: {id_sp: sanPham.id},
+				attributes: ['id','img']
+			});
+			//tạo mản chứ id cũ
+			const currentId = CurrentBienThe.map(v=> v.id);
+			//tạo mảng để lưu id mà fe gửi lên để biết cái nào không bị xóa;
+			const inputId : number[] = [];
+			for(const [index, item] of bien_the.entries()){
+				const bienTheFileKey = `hinh_bien_the_${index}`;
+				const bienTheFile = files[bienTheFileKey]?.[0];
+				let finalCodeBienThe = item.code;
+				if(!finalCodeBienThe){
+					finalCodeBienThe = generateSku();
+				}
+				if(!item.gia || !item.so_luong){
+					throw {status: 400, thong_bao: "Giá và số lượng của biến thể không đc để trống"};
+				}
+				
+				let finalImg :string|null = "";
+				if(item.id){
+					//th1 cập nhật trường có gửi id
+					inputId.push(item.id);
+					//tìm curent biến thế có id trung vioiws item.id
+					const bienTheDB = CurrentBienThe.find(v=> v.id == item.id);
+					const existingBienThe = await  SanPhamBienThe.findOne({
+						where:{ 
+						code: finalCodeBienThe,
+						id: {[Op.not]: item.id}}
+
+					})
+					if(existingBienThe){
+						throw {status: 409, thong_bao: "Mã Sku của biến thể đã tồn tại mới nhập cái khác"};
+					}
+					if(bienTheDB){
+						finalImg = bienTheDB.img;
+						//nếu có ảnh mới thì thay ảnh cũ và xóa ảnh file cũ trong public
+						if(bienTheFile){
+							finalImg = processFilePath(bienTheFile);
+							if(bienTheDB.img){
+								oldFileToDelete.push(covertWebPathToAbsolutePath(bienTheDB.img));
+							}
+						}
+						
+					}
+					await SanPhamBienThe.update({
+						ten_bien_the: item.ten_bien_the,
+						code: finalCodeBienThe,
+						gia: item.gia,
+						so_luong: item.so_luong,
+						img: finalImg
+					},{where: {id: item.id},transaction: t});
+				}else{
+					const existingBienThe = await  SanPhamBienThe.findOne({
+						where:{ 
+						code: finalCodeBienThe}
+
+
+					})
+					if(existingBienThe){
+						throw {status: 409, thong_bao: "Mã Sku của biến thể đã tồn tại mới nhập cái khác"};
+					}
+					//th 2 tạo mới khi fe không gửi id;
+					
+					if(bienTheFile){
+						finalImg = bienTheFile ? processFilePath(bienTheFile) : null;
+					}
+					await SanPhamBienThe.create({
+						id_sp: sanPham.id,
+						ten_bien_the: item.ten_bien_the,
+						code: finalCodeBienThe,
+						gia: item.gia,
+						so_luong: item.so_luong,
+						img: finalImg
+						
+					},{transaction: t});
+
+				}
+			}
+			const idToDelete = currentId.filter(dbId => !inputId.includes(dbId))//lọc những id có trong db nhưng ko có trong danh sách fe gửi lên
+			if(idToDelete.length > 0){
+				// kiêm trả xem  biên thể đó có trong dh không
+				const usedVariant = await DonHangChiTiet.findOne({
+                    where: { 
+                        id_bt: idToDelete // Sequelize tự hiểu là tìm id_bt IN [idsToDelete]
+                    }
+                });
+				if(usedVariant){
+					throw {status: 400, thong_bao: "Không thể xóa biến thể do đã phát sinh đơn hàng, vui lòng chỉnh số lượng về 0 để 0 bán biế thể"}
+				}
+				//lấy danh  sách các biên thể sap xóa để dọn rác
+				const bienTheToDelete = CurrentBienThe.filter(v=> idToDelete.includes(v.id));
+				bienTheToDelete.forEach(v=>{
+					if(v.img){
+						oldFileToDelete.push(covertWebPathToAbsolutePath(v.img));
+					}
+				})
+				await SanPhamBienThe.destroy({
+					where: {id: idToDelete},
+					transaction: t
+				})
+			}
+		}
+		await t.commit();
+		isCommit = true;
+		if(oldFileToDelete.length > 0){
+			await Promise.all(oldFileToDelete.map(path=>{
+				return fs.promises.unlink(path).catch(error=>{
+					console.warn("Lỗi xóa file cũ:", error.message)
+					return Promise.resolve();
+				});
+			}));
+			
+		}	
+		const detailStream = redisClient.scanIterator({
+			MATCH: `${REDIS_KEYS.PRODUCT.PREFIX}slug:${slugOld}*`
+		})
+		for await (const key of detailStream){
+			await redisClient.del(key);
+		}
+		return res.status(200).json({thong_bao: "Cập nhật sản phẩm thành công",success: true});
+
+	} catch (error) {
+		if(!isCommit){
+			await t.rollback();
+		}
+		
+		await cleanUpfiles(req);
+		if(newFileCreated.length > 0){
+			await Promise.all(newFileCreated.map(path=>{
+				return fs.promises.unlink(path).catch(error=>{
+					console.warn("Lỗi xóa file mới:", error.message)
+					return Promise.resolve();
+				})
+			}))
+		}
+		
+		const err = error as CustomError;
+		// 
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi cập nhật sản phẩm";
+		if(status >= 500){
+	   		logger.error(`[CRITICAL] Lỗi APi sửa sản phẩm của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+	   	}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.delete<updateSanPhamInPut['params']>('/shop/san-pham/:id',checkShop,validate(sanPhamIdSchema),async(req,res)=>{
+	const t = await sequelize.transaction();
+	let isCommitted = false;
+	try {
+		
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const {id} = req.params;
+		const sanPham = await SanPham.findOne({
+			where: {id_user: id_user, id: id},
+			include: [{
+				model: SanPhamBienThe,
+				as: 'san_pham_bien_the',
+				attributes: ['img']
+			},{
+				model: IMG_SanPham,
+				as: 'imgs',
+				attributes: ['url']
+			}]
+		}
+		);
+		if(!sanPham){
+			throw {status: 404 ,thong_bao: "ID sản phẩm không tồn tại nên không thể xóa  sản phẩm"};
+		}
+		const slugOld = sanPham.slug;
+		//nếu sản phẩm phất sinh trong dh thì ko đc xóa
+		const isSold = await DonHangChiTiet.findOne({
+            where: { id_sp: id }
+        });
+
+        if (isSold) {
+            // Ném lỗi 400 (Bad Request) để Frontend hiện thông báo đỏ
+            throw { 
+                status: 400, 
+                thong_bao: "Sản phẩm này đã phát sinh đơn hàng nên KHÔNG THỂ XÓA. Vui lòng chuyển trạng thái sang 'Ẩn' hoặc 'Ngừng kinh doanh'." 
+            };
+        }
+		const sanPhamData = sanPham.toJSON();
+		const fileToUnlink: string[] = [];
+		if(sanPhamData.img){
+			fileToUnlink.push(sanPham.img);
+		}
+		if(sanPhamData.san_pham_bien_the && sanPhamData.san_pham_bien_the.length > 0){
+			sanPhamData.san_pham_bien_the.map((bt: ImgBienThe)=>{
+				if(bt.img){
+					fileToUnlink.push(bt.img);
+				}
+			})
+		}
+		if(sanPhamData.imgs && sanPhamData.imgs.length > 0){
+			sanPhamData.imgs.map((img: IMG_SanPham)=>{
+				if(img.url){
+					fileToUnlink.push(img.url);
+				}
+			})
+		}
+		await ThuocTinhSP.destroy({where: {id_sp: sanPham.id}, transaction: t});
+		await IMG_SanPham.destroy({where: {id_sp: sanPham.id}, transaction: t});
+		await SanPhamBienThe.destroy({where: {id_sp: sanPham.id}, transaction: t});
+		await sanPham.destroy({transaction: t});
+		await t.commit();
+		isCommitted = true;
+		if(fileToUnlink.length > 0){
+			await Promise.all(
+				fileToUnlink.map((filePath)=>{
+					const absolutePath = covertWebPathToAbsolutePath(filePath);
+					return fs.promises.unlink(absolutePath).catch((error)=>{
+						console.warn(` Cảnh báo: Không thể xóa tệp vật lý ${filePath}`, error.message);
+						return Promise.resolve();
+						
+					});
+				})
+			);
+		}
+		//trong th redis bi at ket noi hoặc vang ra  vi ko the roll  back mot trânsaction da dc thanh công trước đó
+		//cách fix dặt một cờ hiệu  báo là chi rollback khi biến là fasle
+		const detailStream = redisClient.scanIterator({
+		MATCH: `${REDIS_KEYS.PRODUCT.PREFIX}slug:${slugOld}*`,
+		});
+
+		for await (const key of detailStream) {
+		await redisClient.del(key);
+		}
+		return res.status(200).json({thong_bao: "Đã xóa thành công sản phẩm", success: true});
+	} catch (error) {
+		if(!isCommitted){
+			await t.rollback();
+		}
+		
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lôi máy chủ khi xóa sản phẩm";
+		if(status >= 500){
+	   		logger.error(`[CRITICAL] Lỗi APi xóa sản phẩm của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+	   }
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.get<{}, {}, {}, GetallDonHang>('/shop/don-hang',checkShop,async(req , res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1) * limit;
+		const whereCondition: WhereOptions<DonHang> = {
+			id_shop: id_shop
+		}
+		if(req.query.trang_thai !== null && req.query.trang_thai !== undefined){
+			const trang_thai = Number(req.query.trang_thai);
+			if(!isNaN(trang_thai)){
+				whereCondition.trang_thai_dh = trang_thai
+			}
+		}
+		const {rows, count} = await DonHang.findAndCountAll({
+			limit: limit,
+			offset: offset,
+			order: [['createdAt','DESC']],
+			where: whereCondition,
+			include: [{
+				model: DonHangChiTiet,
+				as: 'chi_tiet_dh',	
+				attributes: ['id','id_dh','id_sp','id_bt','ten_sp','img','so_luong','gia','thanh_tien']
+			},{
+				model: User,
+				as: 'nguoi_mua',
+				attributes: ['ho_ten','id','hinh']
+			},{
+				model: PTTT,
+				as: 'pttt',
+				attributes: ['ten_pt','code']
+			}],
+			distinct: true
+		});
+		const totalPages = Math.ceil(count / limit);
+		const result = {
+			data: rows,
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			}
+		}
+		return res.status(200).json({result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách đơn hàng của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi xem lịch sử đơn hàng", success: false});
+	}
+})
+router.get<getDonHangDetailInput>('/shop/don-hang/:id',checkShop,validate(getDonHangDetailSchema),async(req, res)=>{
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+
+		const donHang = await DonHang.findOne({
+			where: {
+				id: id,
+				id_shop: id_shop
+			},
+			include: [{
+				model: DonHangChiTiet,
+				as: 'chi_tiet_dh',
+				attributes: ['id','ten_sp','img','so_luong','gia','thanh_tien','id_bt'],
+			},{
+				model: User,
+				as:'shop',
+				attributes: ['id','ten_shop','hinh']
+			},{
+                model: User,
+                as: 'nguoi_mua',
+                attributes: ['id','ho_ten','hinh']
+            },{
+				model: PTTT,
+				as: 'pttt',
+				attributes: ['ten_pt','code']
+			},{
+				model: Voucher,
+				as: 'voucher',
+				attributes: ['ten_km','code','loai_km','gia_tri_giam'],
+				required: false//left join có voucher thì hiện ko thì thôi
+			}]
+		});
+		if(!donHang){
+			throw {status: 404, thong_bao: "Đơn hàng không tòn tại"};
+		}
+		return res.status(200).json({data: donHang, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		
+		const status = err.status ||500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi xem chi tiết đơn hàng"
+		if(status >= 500){
+	   		logger.error(`[CRITICAL] Lỗi APi lấy chi tiết 1 đơn hàng  của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+	   }
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.put<changeStatusDonHangShopInput['params'], {}, changeStatusDonHangShopInput['body']>('/shop/don-hang/:id/huy',checkShop,validate(changeStatusDonHangShopSchema),async(req, res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const {ly_do} = req.body;
+		
+		const donHang  = await  DonHang.findOne({
+			where: {id: id, id_shop: id_shop},
+			include: [{
+				model: DonHangChiTiet,
+				as: 'chi_tiet_dh'
+			}],
+			transaction: t
+		})
+		if(!donHang){
+			throw {status: 404, thong_bao: "Đơn hàng không tồn tại"}
+		}
+		if(donHang.trang_thai_thanh_toan === THANH_TOAN_THANH_CONG_VALUE){
+			throw {status: 400, thong_bao : "Đơn hàng đã thanh toán không thể hủy."};
+		}
+		//shop cchir đc hủy đơn hàng ở trạng thái  chờ xác nhận
+		if(donHang.trang_thai_dh !== 0){
+			throw {status: 400, thong_bao: "Chỉ được  hủy đơn khi đang chờ xác nhận"}
+		}
+		
+		donHang.trang_thai_dh = DON_HANG_HUY_VALUE;
+		donHang.ly_do_huy = `Shop hủy ${ly_do}`;
+		await donHang.save({transaction: t});
+		const donHangItem = donHang as DonHangWithChiTiet;
+		if(donHangItem.chi_tiet_dh){
+			for(const item of donHangItem.chi_tiet_dh){
+				
+				if(item.id_bt){
+					await SanPhamBienThe.increment('so_luong',{ by: item.so_luong, where: {id: item.id_bt}, transaction: t});
+				}else{
+					await SanPham.increment('so_luong', {by: item.so_luong, where: {id: item.id_sp}, transaction: t});
+				}
+			}
+			if(donHang.id_km){
+                await KhuyenMaiUser.destroy({
+                    where: {
+                        id_km: donHang.id_km,
+                        id_dh: donHang.id,
+                        id_user: donHang.id_user
+                    },
+                    transaction: t
+                })
+                //cộng lại số lượng voucher cho hệ thông
+                await Voucher.increment('so_luong',{
+                    by: 1,
+                    where: {id: donHang.id_km},
+                    transaction: t
+                })
+                // trừ đi số lượng da dung 
+                await Voucher.decrement('da_dung',{
+                    by: 1,
+                    where: {id: donHang.id_km},
+                    transaction:t 
+                });
+            }
+		}
+		await t.commit();
+		try {
+			const io = req.app.get('io');
+			const [newUserNotif, newShopNotif, newAdminNotif] = await Promise.all([
+				
+				ThongBao.create({
+					id_user: donHang.id_user,
+					tieu_de: "Shop hủy đơn hàng",
+					noi_dung: `Đơn hàng ${donHang.ma_dh} đã bị shop hủy`,
+					loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+					id_tham_chieu: donHang.id,
+					vai_tro_nhan: VAI_TRO_NHAN.PUBLIC,
+					da_doc:  0
+				}),
+				ThongBao.create({
+					id_user: donHang.id_shop,
+					tieu_de: "Hủy đơn hàng",
+					noi_dung: `Bạn đã hủy đơn hàng ${donHang.ma_dh}`,
+					loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+					id_tham_chieu: donHang.id,
+					vai_tro_nhan: VAI_TRO_NHAN.SHOP,
+					da_doc:  0
+				}),
+				ThongBao.create({
+					id_user: ADMIN_ROLE_ID,
+					tieu_de: "Shop hủy đơn hàng",
+					noi_dung:  `Shop ${id_shop} đã hủy đơn hàng ${donHang.ma_dh}` ,
+					loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+					id_tham_chieu: donHang.id,
+					vai_tro_nhan: VAI_TRO_NHAN.ADMIN,
+					da_doc:  0
+				})
+			]);
+			io.to(buildRoom.user(donHang.id_user)).emit(SocketRoomName.notificationNew,newUserNotif.toJSON());
+			io.to(buildRoom.shop(id_shop)).emit(SocketRoomName.notificationNew,newShopNotif.toJSON());
+			io.to(buildRoom.admin()).emit(SocketRoomName.notificationNew,newAdminNotif.toJSON());
+			
+			logger.info(`[SOCKET] Đã bắn thông báo hủy đơn hàng ${donHang.id} `);
+		} catch (socketError) {
+			const err = socketError as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn thông báo hủy đơn hàng: ${err.message}`, { stack: err.stack });
+		}
+		return res.status(200).json({thong_bao: "Đã hủy đơn hàng thành công", success: true});
+
+	} catch (error) {
+		await t.rollback();
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  hủy đơn hàng";
+		if(status >= 500){
+	   		logger.error(`[CRITICAL] Lỗi APi cập nhật trạng thái đơn hàng của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});  
+	  	 }
+		return res.status(status).json({thong_bao, success:false});
+	}
+})
+router.put<changeStatusDonHangByShopInput['params'],{},changeStatusDonHangByShopInput['body']>('/shop/don-hang/:id/trang-thai',checkShop,validate(changeStatusDonHangByShopSchema),async(req: Request ,res: Response)=>{
+    
+    try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+        const {id} = req.params;
+
+        const { trang_thai} = req.body;
+		
+        const donHang = await DonHang.findOne({
+            where: {id: id, id_shop: id_shop},
+            include: [{
+                model: DonHangChiTiet,
+                as: 'chi_tiet_dh',
+                attributes: ['id_sp','id_bt','so_luong']
+            }]
+        });
+        if(!donHang){
+            throw {status: 404, thong_bao: "Dơn hàng không tồn tại"};
+        }
+        const trang_thai_cu = donHang.trang_thai_dh;
+        if(trang_thai_cu === DON_HANG_DA_GIAO_VALUE || trang_thai_cu === DON_HANG_HUY_VALUE || trang_thai_cu === DON_HANG_DANG_GIAO_VALUE){
+            throw {status: 400, thong_bao: "Đơn hàng đã kết thúc không thể thay đổi trạng thái"};
+        }
+        if(trang_thai <= trang_thai_cu){
+            throw {status: 400, thong_bao: "Không thể quay ngược trạng thái đơn  hàng"};
+        }
+        const updateData: Partial<DonHang> = {
+            trang_thai_dh: trang_thai
+        };
+        await donHang.update(updateData);
+		try {
+			const io = req.app.get('io');
+			const  template = thongBaoTemplate[noficationType.UPDATE_DH_SHOP]
+			const newUserNotif = await ThongBao.create({
+				id_user: donHang.id_user,
+				tieu_de: noficationType.UPDATE_DH_SHOP,
+				noi_dung: template.content(donHang.ma_dh,donHang.trang_thai_dh),
+				loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+				id_tham_chieu: donHang.id,
+				vai_tro_nhan: VAI_TRO_NHAN.PUBLIC,
+				da_doc:  0
+			});
+			io.to(buildRoom.user(donHang.id_user)).emit(SocketRoomName.notificationNew,newUserNotif.toJSON());
+			const templateAdmin = thongBaoTemplate[noficationType.ADMIN_UPDATE_DH_SHOP];
+			const newAdminNotif = await ThongBao.create({
+				id_user: ADMIN_ROLE_ID,
+				tieu_de: noficationType.ADMIN_UPDATE_DH_SHOP,
+				noi_dung: templateAdmin.content(id_shop,donHang.ma_dh),
+				loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+				id_tham_chieu: donHang.id,
+				vai_tro_nhan: VAI_TRO_NHAN.ADMIN,
+				da_doc:  0
+			});
+			io.to(buildRoom.admin()).emit(SocketRoomName.notificationNew,newAdminNotif.toJSON());
+			logger.info(`[SOCKET] Đã bắn thông báo cập nhật đơn hàng #${donHang.id} cho User ${donHang.id_user}`);
+		} catch (socketError) {
+			const err = socketError as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn thông báo cập nhật đơn hàng: ${err.message}`, { stack: err.stack });
+		}
+
+        return res.status(200).json({thong_bao: "Cập  nhật trạng thại dơn hàng thành công", success: true});
+    } catch (error) {
+
+        const err = error as CustomError;
+        const status = err.status || 500;
+        const thong_bao = err.thong_bao || "Lỗi máy  chủ khi  thay đổi tình trạng đơn hàng";
+        if(status >= 500){
+            logger.error(`[CRITICAL] Lỗi APi thay đổi trạng  thái đơn hàng của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+        }
+        return res.status(status).json({thong_bao, success: false})
+    }
+})
+router.get('/danh-muc-san-pham/select',checkShop,async(req, res)=>{
+	try {
+		const data = await DM_San_Pham.findAll({
+			where: {an_hien: AN_HIEN_VALUE},
+			order: [['createdAt','DESC']],
+			attributes: ['id','ten_dm']
+		})
+		return res.status(200).json({data, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh mục sản phảm select ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chu khi lấy danh sách danh mục", success: false});
+	}
+})
+router.get('/thuong-hieu-san-pham/select', async(req , res)=>{
+	try {
+		const data = await ThuongHieu.findAll({
+			where: {an_hien: AN_HIEN_VALUE},
+			order: [['createdAt','DESC']],
+			attributes: ['id','ten_th']
+		})
+		return res.status(200).json({data, success: true});
+	} catch (error) {
+		const err = error as  CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy thương hiệu sản phảm select ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(200).json({thong_bao: "Lỗi máy chủ khi lấy danh sách thương hiệu", success: false})
+	}
+})
+router.get('/thuoc-tinh-san-pham/select',checkShop, async(req, res)=>{
+	try {
+		const data = await ThuocTinh.findAll({
+			order: [['id','DESC']],
+		})
+		return res.status(200).json({data, success: true});
+	} catch (error) {
+		const err = error as  CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy thuộc tính sản phảm select ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(200).json({thong_bao: "Lỗi máy chủ khi lấy danh sách thương hiệu", success: false})
+	}
+})
+// cập nhạt thông tin tài khaonr
+router.get('/lay-thong-tin-tk',checkAuth,async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const taiKhoan = await User.findByPk(id_user,{
+			attributes: ['id','ho_ten','hinh','dien_thoai','createdAt']
+		});
+		if(!taiKhoan){
+			throw {status: 404, thong_bao: "Tài khoản không tồn tại"};
+		}
+		return res.status(200).json({taiKhoan, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy lấy thông tin tài khoản ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "lỗi máy chủ khi lấy tài khoản"})
+	}
+})
+router.patch<{}, {}, updateUserInput>('/cap-nhat-thong-tin-tk',checkAuth,uploadMiddleware,validate(updateUserSchema), async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const {ho_ten, dien_thoai} = req.body
+		const files = req.files as MulterFieldFiles;
+		const newHinh = files?.['hinh_user']?.[0]?.path;
+		const oldFileToDelete: string[] = [];
+		const allowedUpdate: Partial<User> = {};
+		const taiKhoan = await User.findByPk(id_user);
+		if(!taiKhoan){
+			throw {status: 404, thong_bao: "tài khoản không tồn tại"};
+		}
+		if(taiKhoan.ho_ten !== ho_ten){
+			allowedUpdate.ho_ten = ho_ten;
+		}
+		if(taiKhoan.dien_thoai !== dien_thoai){
+			allowedUpdate.dien_thoai = dien_thoai;
+		}
+		if(newHinh){
+			allowedUpdate.hinh = processFilePath(newHinh);
+			if(taiKhoan.hinh){
+				const oldAbsolutePath = covertWebPathToAbsolutePath(taiKhoan.hinh);
+				oldFileToDelete.push(oldAbsolutePath);
+			}
+		}
+		if(Object.keys(allowedUpdate).length > 0){
+			await  taiKhoan.update(allowedUpdate);
+			await Promise.all(oldFileToDelete.map((filePath)=>{
+				return fs.promises.unlink(filePath).catch((error)=>{
+					console.warn(` Cảnh báo: Không thể xóa tệp vật lý ${filePath}`, error.message);   
+					return Promise.resolve();
+				})
+			}))
+		}
+		return res.status(200).json({thong_bao: "Đã cập nhật thông tin tài khoản", success: true});
+		
+	} catch (error) {
+		const err = error as CustomError;
+		await cleanUpfiles(req);
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi cập nhật tài khoản";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi cập nhật thông tin tai khoản ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+
+
+//đăng ký shop
+router.post<{}, {} , createShopInput>('/dang-ky-shop',checkAuth,validate(createShopSchema),async(req, res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const {ten_shop} = req.body;
+		//tìm user hiện tại và lock lại tránh đăng ký 2 lần
+		const user = await User.findByPk(id_user, {transaction: t, lock: true});
+		if(!user){
+			throw {status: 404, thong_bao: "User không tồn tại"};
+		}
+		if(normalizeBoolean(user.is_shop) === SHOP_VALUE){
+			throw {status: 400, thong_bao : "Bạn đã là shop  rồi không thể đăng ký làm shop  nữa"};
+		}
+		const existingShop = await User.findOne({
+			where: {ten_shop: ten_shop},
+			transaction: t,
+			lock: true
+		});
+		if(existingShop){
+			throw {status: 409, thong_bao: "tên shop  đã tồn tại"}
+		}
+		await user.update({
+			is_shop: SHOP_VALUE,
+			ten_shop: ten_shop
+		},{transaction: t});
+		const checkVi = await ViShop.findOne({where: {id_shop: id_user}, transaction: t});
+		if(!checkVi){//neeeus shop ko có tạo vị mới
+			await ViShop.create({
+				id_shop: id_user,
+				so_du: 0,
+				tong_da_rut: 0
+			},{transaction: t})	
+		}
+		await t.commit();
+		return res.status(200).json({thong_bao: `Đăng ký shop thành công! Chào mừng shop "${ten_shop}"`,success: true});
+	} catch (error) {
+		await t.rollback();
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  đăng ký shop";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi đăng ký shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+//danh muc sp
+router.get('/danh-muc-parent',async(req, res)=>{
+	try {
+		const cachedata = await redisClient.get(REDIS_KEYS.CATEGORY.PARENT);
+		if(cachedata){
+			return  res.status(200).json({
+				success: true,
+				data: JSON.parse(cachedata)
+			})
+		}
+		const data = await DM_San_Pham.findAll({
+			where: {parent_id: null, an_hien: AN_HIEN_VALUE},
+			order: [['stt','ASC']],
+			attributes: ['id','ten_dm','img','slug','stt', 'parent_id']
+		});
+		await redisClient.setEx(REDIS_KEYS.CATEGORY.PARENT,REDIS_TTL.PRODUCT_CATEGORY,JSON.stringify(data));
+		return res.status(200).json({data, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh mục cha ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy các danh mục cha"});
+	}
+})
+
+router.get('/danh-muc-phan-cap',async(req , res)=>{
+	try {
+		//tạo redis key
+		
+	
+		const cachedata = await redisClient.get(REDIS_KEYS.CATEGORY.TREE);
+		if(cachedata){
+			return res.status(200).json({
+				success: true,
+				data: JSON.parse(cachedata),
+				// source: 'redis'
+			});
+		}
+		const allDanhMuc = await DM_San_Pham.findAll({
+			where: {an_hien: AN_HIEN_VALUE},
+			attributes: ['id','ten_dm','parent_id','slug'],
+			order: [['ten_dm','ASC']],
+			raw: true
+		}) as unknown as DanhMucTreeNode[];
+		//thuật toán ghép cây
+		//truyên id vào có gia trị là danhmuctreenode
+		const danhMucMap = new Map<number, DanhMucTreeNode>();
+		const rootNodes: DanhMucTreeNode[] = [];
+		//tạo node cho danh mục lưu vào map
+		allDanhMuc.forEach((cat)=>{
+			//jhoiwr tạo mảng chirdern rỗng cho từng thằng
+			danhMucMap.set(cat.id, {...cat, children: []});
+		})
+		//duyêt đẻ ghép con vào cha
+		allDanhMuc.forEach((cat)=>{
+			const node = danhMucMap.get(cat.id)//lấy node hiện tại ra
+			if(node){
+				//nếu có parent_id và tìm thấy cha trong map
+				if(cat.parent_id && danhMucMap.has(cat.parent_id)){
+					const parentNode = danhMucMap.get(cat.parent_id);//lấy ra thằng cha
+					//nhet thằng con vào cha
+					parentNode?.children.push(node);
+
+				}else{
+					// ko có parent id haocwj có parent id nhưng ko tìm thấy cha ccho làm cha
+					rootNodes.push(node);
+				}
+			}
+		});
+		//lluw kết quả redis sau mỗi lần xài
+		//lưu vào với thời gian hêt hạn setEx
+		//ép giá trị lưu thành chouox  json.stringfy
+		await redisClient.setEx(REDIS_KEYS.CATEGORY.TREE, REDIS_TTL.PRODUCT_CATEGORY, JSON.stringify(rootNodes));
+		;
+		return res.status(200).json({data: rootNodes, success: true});
+
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh mục phân cấp ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});		
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy danh mục phân cấp", success: false});
+	}
+})
+
+router.get<ParamsSanPhamBySlug, {}, {}, FilterQuery>('/danh-muc-san-pham/filter/:slug',async(req, res)=>{
+	try {
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const  {slug} = req.params;
+		const {id_ths,min_price,max_price, rating, is_on_sale,is_stock, sort} = req.query
+		
+		const offset = (page -1) * limit;
+		const CurrentDanhMuc = await DM_San_Pham.findOne({
+			where: {slug: slug, an_hien: AN_HIEN_VALUE}
+		});
+		
+		if(!CurrentDanhMuc){
+			 throw {status: 404, thong_bao: "Danh mục sản phẩm không tồn tại"};
+		}
+		const danhMucid = CurrentDanhMuc.id;
+		let parentDanhMuc:DanhMucSidebarParent| null = null;
+		let listDanhMucToquery: number[] = [];//danh sách id để query sản phảm
+		if(CurrentDanhMuc.parent_id && CurrentDanhMuc.parent_id !== 0){
+			//th 1 chọn danh mục con phải tìm danh mục cha để hiển thị ở sidebar
+			const result = await DM_San_Pham.findByPk(CurrentDanhMuc.parent_id,{
+				include:[{
+					model: DM_San_Pham,
+					as: 'children',
+					attributes: ['id','ten_dm','slug'],
+					where: {an_hien: AN_HIEN_VALUE},
+					required: false
+				}],
+				attributes: ['id','ten_dm','slug']
+			});
+			parentDanhMuc = result?.toJSON() as DanhMucSidebarParent;
+			listDanhMucToquery = [danhMucid]//chỉ lấy đúng sản phẩm dm con này
+		}else{//th2 chọn danh mục cha tìm caccs con của nó
+			const result = await DM_San_Pham.findByPk(danhMucid,{
+				include: [{
+					model: DM_San_Pham,
+					as: 'children',
+					attributes: ['id','ten_dm','slug'],
+					where: {an_hien: AN_HIEN_VALUE},
+					required: false
+				}],
+				attributes: ['id','ten_dm','slug']
+			})
+			parentDanhMuc = result?.toJSON() as DanhMucSidebarParent
+			if(parentDanhMuc && parentDanhMuc.children.length > 0 && parentDanhMuc.children ){
+				listDanhMucToquery = parentDanhMuc.children.map(c => c.id);
+			}
+			listDanhMucToquery.push(danhMucid);//thêm cả dm cha vò nếu cha cũng chưa  sản phẩm
+		}
+		const sidebarData = parentDanhMuc ? {
+			parent: {
+				id: parentDanhMuc.id,
+				ten_dm: parentDanhMuc.ten_dm,
+				slug: parentDanhMuc.slug,
+			},
+			children : parentDanhMuc.children || []
+		} : null
+		const whereClause: WhereOptions = {
+			an_hien: AN_HIEN_VALUE,
+			is_active: ACTIVATED_VALUE,
+			id_dm: {[Op.in]: listDanhMucToquery}
+		}
+		if(id_ths){
+			//chuyển chuỗi vd 1,2,3 thành mang [1,2,3]
+			const listThuongHieu = id_ths.split(',').map(id=>Number(id)).filter(id=>!isNaN(id) && id > 0);//lọc Nan và số 0
+			if(listThuongHieu.length > 0){
+				whereClause.id_th = {[Op.in]: listThuongHieu};
+			}
+		}
+		if(is_on_sale === 'true' || is_on_sale === '1'){
+			whereClause.sale = {[Op.gt]: 0};//sale > 0
+		}
+		if(is_stock === 'true' || is_stock === '1'){
+			whereClause.so_luong = {[Op.gt]: 0};
+		}
+		if(min_price || max_price){//nếu giá trị max hoặc min tồn tại
+			const  min =  Number(min_price) || 0;
+			const max = Number(max_price) || 9999999999;// mặc dịnh 9 tỷ nếu max ko có giá trị
+			// Sử dụng Sequelize.literal để viết biểu thức toán học trong WHERE
+			whereClause[Op.and as any] = [
+                literal(`(gia * (1 - COALESCE(sale, 0) / 100)) BETWEEN ${min} AND ${max}`)
+            ];
+
+		}
+		if(rating){
+			const minRating = Number(rating);
+			if(!isNaN(minRating)){// là số thì vô đay
+				whereClause.diem_tb_dg = {[Op.gte]: minRating}
+
+			}
+		}
+		let orderClause: Order = [['createdAt', 'DESC']]; // Mặc định: Mới nhất
+		const realPriceLiteral = literal('(gia * (1 - COALESCE(sale, 0) / 100))');//lọc theo  giá giảm  gần nhất
+        switch (sort) {
+            case 'price_asc': orderClause = [[realPriceLiteral, 'ASC']]; break; // Giá thấp -> cao
+            case 'price_desc': orderClause = [[realPriceLiteral, 'DESC']]; break; // Giá cao -> thấp
+            case 'newest': orderClause = [['createdAt', 'DESC']]; break;
+            case 'bestseller': orderClause = [['da_ban', 'DESC']]; break; // Bán chạy (cần cột da_ban)
+            case 'popular': orderClause = [['luot_xem', 'DESC']]; break; // Phổ biến (theo lượt xem)
+        }
+		const {rows, count} = await SanPham.findAndCountAll({
+			where: whereClause,
+			order: orderClause,
+			limit: limit,
+			offset: offset,
+			attributes: ['id','ten_sp','gia','sale','img','slug','da_ban','luot_xem', 'diem_tb_dg','so_luong_dg','id_th', 'id_dm', 'createdAt']
+		});
+		const danhsachSanPham = rows.map((sp)=>{
+			const item = sp.toJSON();
+			const gia_da_giam = item.sale ? item.gia * (1 - item.sale / 100) : item.gia;
+			return {
+				...item,
+				gia_da_giam: gia_da_giam
+
+			}
+		});
+		const totalPages = Math.ceil(count / limit);
+		return res.status(200).json({
+			data: {
+				current_danhmuc_id: danhMucid,//dữ liệu để fe biết cái nào tô đỏ
+				sidebar: sidebarData,// cấu trúc cho cây sidebara
+				product: danhsachSanPham,// list sp
+				pagination: {
+					currentPage: page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				}
+			},
+			success: true
+		});
+
+	} catch (error) {
+		const err = error as CustomError;
+		
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi lọc sản phẩm";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi lấy danh sách sản phẩm lọc ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+		
+	}
+})
+// 
+router.post<{},{}, previewDonHangInput>('/xem-truoc-don-hang',checkAuth,validate(previewDonHangSchema),async(req, res)=>{
+	try {
+		const {items, id_km} = req.body
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const sanPhamId = items.map((i) => i.id_sp);
+		const bienTheId = items.filter((i)=> i.id_bt).map((i)=> i.id_bt);
+		//query sản phẩm kèm thông tin shop
+		const result = await SanPham.findAll({
+			where: {
+				id: {[Op.in]: sanPhamId},
+				an_hien: AN_HIEN_VALUE
+			},
+			attributes: ['id','ten_sp','gia','sale','so_luong','id_user','img','slug'],
+			include: [{
+				model: User,
+				as: 'shop',
+				attributes: ['id','ten_shop','hinh']
+			}]
+		}) ;
+		const sanPhamDB: SanPhamData[] = result.map(item =>
+			item.get({ plain: true }) as SanPhamData
+		);
+		//query tới biến thể nếu có
+		let bienTheDB: BienTheData[] = [];
+		if(bienTheId.length > 0){
+			bienTheDB = await SanPhamBienThe.findAll({
+				where: {id: {[Op.in]: bienTheId}},
+				attributes: ['id','id_sp','ten_bien_the','gia','so_luong','img'],
+				include: [{
+					model: SanPham,
+					as: 'san_pham',
+					where: {an_hien: AN_HIEN_VALUE}
+				}]
+			})
+		}
+		//tạo map để tra cứu nhanh
+		const sanPhamMap = new Map<number, SanPhamData>();
+		sanPhamDB.forEach(sp => sanPhamMap.set(sp.id, sp));
+		const bienTheMap = new Map<number, BienTheData>();
+		bienTheDB.forEach(bt => bienTheMap.set(bt.id, bt));
+		// gom shop tính tiền hàng
+		const shopGroups = new Map<number, ShopGroup>();
+		let  totalMerchadiseValue = 0;//tổng tiền hàng toàn bộ chưa  tinh ship và voucher
+		for(const  item of items){
+			const sanPham = sanPhamMap.get(item.id_sp);
+			if(!sanPham) continue;//nếu sản phẩm 0 tồn tại thì bỏ qua
+			let finalName = sanPham.ten_sp;
+			let finalImg = sanPham.img;
+			let basePrice = sanPham.gia;
+			let  stockAvailable = sanPham.so_luong;
+			//neews item có id_bt lấy thông tin từ biến thể
+			if(item.id_bt){
+				const bienThe = bienTheMap.get(item.id_bt);
+				console.log(bienThe);
+				//check xem biến thể có thuốc sản phẩm này ko
+				if(bienThe && bienThe.id_sp === sanPham.id){
+					finalName = `${sanPham.ten_sp}(${bienThe.ten_bien_the})`;
+					basePrice = bienThe.gia;
+					stockAvailable = bienThe.so_luong;
+					if(bienThe.img) finalImg = bienThe.img;
+				}
+			}
+			//logic giá km  (sale %) giảm theo  %
+			const gia_da_giam = sanPham.sale > 0 ? Math.round(basePrice * (1 - sanPham.sale / 100)) : basePrice;
+			const thanh_tien = gia_da_giam * item.so_luong;
+			totalMerchadiseValue += thanh_tien;
+			const shopId = sanPham.id_user;
+			//nếu shop chua có tạo mới
+			if(!shopGroups.has(shopId)){
+				shopGroups.set(shopId,{
+					shop_info: {
+						id: sanPham.shop.id,
+						ten_shop: sanPham.shop.ten_shop,
+						hinh_shop: sanPham.shop.hinh
+					},
+					items: [],
+					tam_tinh: 0,
+					phi_ship: FIXED_SHIPPING_FEE,
+					giam_gia_khuyen_mai: 0,
+					final_total: 0
+				});
+			}
+			//push item vào shop tuong ứng
+			const group = shopGroups.get(shopId);
+			if(group){
+				group.items.push({
+					id_sp: item.id_sp,
+					id_bt: item.id_bt || null,
+					ten_sp: finalName,
+					img: finalImg,
+					so_luong: item.so_luong,
+					gia_da_giam: gia_da_giam,
+					gia_goc: basePrice,
+					sale: sanPham.sale,
+					thanh_tien: thanh_tien,
+					hang_co_sang: stockAvailable
+				});
+				group.tam_tinh += thanh_tien;
+			}
+			
+			
+			
+
+		}
+		let totalVoucherDiscount = 0;
+		let voucherCode = null;
+		let voucherError = null;
+		if(id_km){
+				const voucher = await  Voucher.findByPk(id_km);
+				if(voucher){
+					const now  = new Date();
+					if(now< new Date(voucher.ngay_bd)){
+						voucherError = "Mã chưa đén thời gian áp dụng";
+					}else if(now > new Date(voucher.ngay_kt)){
+						voucherError = "Mã đã  hết hạn sử dụng";
+					}else if(voucher.so_luong <= 0){
+						voucherError = "Mã đã  hết lượt sử dụng";
+					}else if(totalMerchadiseValue < voucher.gia_tri_don_min ){
+						voucherError = `Đơn  hàng chưa đủ ${voucher.gia_tri_don_min.toLocaleString()}đ để dùng mã này`
+					}else if(voucher.gioi_han_user > 0){
+						const usageCount = await KhuyenMaiUser.count({
+							where: {
+								id_user: id_user,
+								id_km: id_km,//quan trong cchuaw tính những đơn bị hủy
+							}
+						});
+						if(usageCount >= voucher.gioi_han_user){
+							voucherError = `Bạn đã hết lượt sử dụng mã này (Tối đa ${voucher.gioi_han_user} lần)`;
+						}
+					}else{
+						//hợp lệ tính tiền
+						voucherCode = voucher.code;
+						let  discountAmout = voucher.gia_tri_giam;
+						//cái này tính theo giá giảm theo %
+						if(voucher.loai_km === GiamGiaTheoPhanTram){
+							discountAmout = Math.round(totalMerchadiseValue * (voucher.gia_tri_giam / 100));
+							//nế giá giảm lớn hơn gia giảm tối đa cho nó bằn chính nó
+							if(discountAmout > voucher.gia_giam_toi_da ){
+								discountAmout = voucher.gia_giam_toi_da;
+							}
+							//ko bao giờ cho voucher vượt quá tiền hàng logic
+							
+						}
+						totalVoucherDiscount = Math.min(discountAmout, totalMerchadiseValue);
+					}
+				}else{
+					voucherError = "Voucher không tồn tại"
+				}
+				
+			}
+			const resultShops: ShopGroup[]= [];
+			let  grandTotal = 0 //tổng thanh toán cuối cùng;
+			shopGroups.forEach((group)=>{
+				//chiaw tiền voucher theo tỷ lệ doanh thu của shop
+				let giaGiamPhanBo = 0;
+				if(totalMerchadiseValue > 0){
+					const tyLe = group.tam_tinh / totalMerchadiseValue;
+					giaGiamPhanBo = Math.round(totalVoucherDiscount * tyLe);
+				}
+				group.giam_gia_khuyen_mai = giaGiamPhanBo;
+				//tiền hàng + ship  + voucher;
+				group.final_total = group.tam_tinh + group.phi_ship - giaGiamPhanBo;
+				grandTotal += group.final_total;
+				resultShops.push(group);
+			});
+			return res.status(200).json({
+				data: {
+					shops: resultShops,
+					tom_tat_don_hang: {
+						total_tien_hang: totalMerchadiseValue,
+						total_tien_ship: FIXED_SHIPPING_FEE * resultShops.length,
+						total_giam_gia_voucher: totalVoucherDiscount,
+						grandTotal: grandTotal//tổng tiền cần trả là
+					},
+					voucher_info: {
+						applied: !!voucherCode,
+						code: voucherCode,
+						error: voucherError,//báo lỗi voucher;
+					}
+
+				},
+				success: true
+			})
+	} catch (error) {
+		const err  =error as CustomError;
+		const  status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi xem trước đơn hàng ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi tính toán đơn hàng", success: false})
+	}
+})
+router.post<{}, {}, createDonHangInput>('/tao-don-hang',checkAuth,validate(createDonHangSchema),async(req, res)=>{
+	const t = await sequelize.transaction();
+	const createdFile: string[] = [];
+
+	try {
+		
+		const {id_dia_chi, id_pttt, items,ghi_chu,id_km} = req.body;
+		const phuongThucThanhToan = await PTTT.findByPk(id_pttt);
+		if(!phuongThucThanhToan){
+			throw {status: 404, thong_bao: "Phương thức thanh toán không tồn tại"}
+		}
+		const userPayload = req.user as AuthUser;
+		const  id_user_mua = userPayload.id;
+		const diaChiDB = await Dia_chi_User.findOne({
+			where: {id: id_dia_chi, 
+				id_user: id_user_mua
+			},
+			transaction: t
+		});
+		if(!diaChiDB){
+			throw {status: 400, thong_bao: "Địa  chỉ giao hàng không tồn tại"};
+		}
+		const {tinh_name, quan_name, phuong_name} = await getNameFromCodes(diaChiDB.tinh, diaChiDB.quan, diaChiDB.phuong);
+		const diaChiFull = `${diaChiDB.dia_chi}, ${phuong_name},${quan_name},${tinh_name}`;
+		const  tenNguoiNhan = diaChiDB.ho_ten;
+		const sdtNguoiNhan = diaChiDB.dien_thoai;
+		// quert sản phẩm kèm biến thể kèm lock//tránh 2 người mua một lúc sản phẩm hết hàng
+		const sanPhamId = items.map((i)=> i.id_sp);
+		const bienTheId = items.filter((i)=> i.id_bt).map((i)=>i.id_bt);
+		const result = await SanPham.findAll({
+			where: {id: {[Op.in]: sanPhamId}, an_hien: 1},
+			transaction: t,
+			lock: true
+		});
+		const sanPhamDB: createSanPhamData[] = result.map(item =>
+			item.get({ plain: true }) as createSanPhamData
+		);
+		let bienTheDB: BienTheData[] = [];
+		if(bienTheId.length > 0){
+			bienTheDB = await SanPhamBienThe.findAll({
+				where: {id: {[Op.in]: bienTheId}},
+				transaction: t,
+				lock: true
+			});
+			
+		}
+		
+		const sanPhamMap = new Map<number, createSanPhamData>();
+		sanPhamDB.forEach(sp => sanPhamMap.set(sp.id, sp));
+		const bienTheMap = new Map<number, BienTheData>();
+		bienTheDB.forEach(bt=> bienTheMap.set(bt.id, bt));
+		//gom shop tính toán lại từ đầu
+		const shopGroups = new Map<number, createShopGroup>();
+		let totalMerchadiseValue = 0;
+		for(const item of items){
+			const sanPham = sanPhamMap.get(item.id_sp);
+			if(!sanPham){
+				throw {status: 404, thong_bao: "Sản phẩm không tồn tại"};
+			}
+			
+			let price = sanPham.gia;
+			let so_luong = sanPham.so_luong;
+			let finalName = sanPham.ten_sp;
+			let finalImg = sanPham.img;
+			let isBienThe = false;
+			// console.log(item.id_bt);
+			
+			if(item.id_bt){
+				const bienThe = bienTheMap.get(item.id_bt);
+				// console.log(bienThe);
+				// console.log(bienThe?.id_sp);
+				// console.log(sanPham.id);
+				if(!bienThe || bienThe.id_sp !== sanPham.id){
+					throw {status: 400, thong_bao: ` Biến thể không hợp lệ cho  SP: ${sanPham.ten_sp}`};
+				}
+				price = bienThe.gia;
+				so_luong = bienThe.so_luong;
+				finalName = `${sanPham.ten_sp} (${bienThe.ten_bien_the})`;
+				finalImg = sanPham.img;
+				isBienThe = true;
+			}
+			if(item.so_luong > so_luong){
+				throw {status: 400, thong_bao: ` Sản phẩm "${finalName}" không đủ hàng (Chỉ còn ${so_luong})`};
+			}
+			
+			const gia_da_giam = sanPham.sale > 0 ? price * (1 - sanPham.sale/100) : price;
+			const thanh_tien = gia_da_giam * item.so_luong;
+			totalMerchadiseValue += thanh_tien;
+			const shopId = sanPham.id_user;
+			if(!shopGroups.has(shopId)){
+				shopGroups.set(shopId, {
+					items: [],
+					tam_tinh: 0
+				});
+			}
+			const group = shopGroups.get(shopId);
+			if(group){
+				group.items.push({
+					id_sp: item.id_sp,
+					id_bt: item.id_bt|| null,
+					ten_sp: finalName,
+					img: finalImg,
+					so_luong: item.so_luong,
+					gia_goc: price,
+					gia_da_giam: gia_da_giam,
+					sale: sanPham.sale,
+					thanh_tien: thanh_tien,//giá tiền lúc giam * so  luong
+					hang_co_sang: so_luong,
+					is_bienthe: isBienThe
+				});
+				group.tam_tinh += thanh_tien//tổng thnahf  tiền của shop
+			}
+		}
+		let totalVoucherDiscount = 0;
+		if(id_km){
+			const voucher = await Voucher.findByPk(id_km, {transaction: t, lock: true});
+			if(!voucher) throw {status: 404, thong_bao: "Mã giảm giá không tồn tại"};
+			const now = new Date();
+			if(now < new Date(voucher.ngay_bd)){
+				throw {status: 400, thong_bao: "Mã giảm giá chưa đến thời gian áp dụng"};
+			}
+			if(now > new Date(voucher.ngay_kt)){
+				throw {status: 400, thong_bao: "Mã giảm giá đã hết hạn"};
+			}
+			if(voucher.so_luong <= 0){
+				throw {status: 400, thong_bao: "Mã giảm giá  đã hết lượt sử dụng"};
+			}
+			if(totalMerchadiseValue < voucher.gia_tri_don_min){
+				throw {status: 400, thong_bao:  `Đơn  hàng chưa đủ ${voucher.gia_tri_don_min.toLocaleString()}đ để dùng mã này`};
+			}
+			if(voucher.gioi_han_user > 0){
+				const usageCount = await KhuyenMaiUser.count({
+					where: {
+						id_user: id_user_mua,
+						id_km: id_km,//quan trong cchuaw tính những đơn bị hủy
+					},
+					transaction: t
+				});
+				if(usageCount >= voucher.gioi_han_user){
+					throw {status: 400, thong_bao: `Bạn đã hết lượt sử dụng mã này (Tối đa ${voucher.gioi_han_user} lần)`}
+				}
+			}
+			let discountAmout = voucher.gia_tri_giam;
+			if(voucher.loai_km === GiamGiaTheoPhanTram){
+				discountAmout = Math.round(totalMerchadiseValue * (voucher.gia_tri_giam/100));
+				if(discountAmout > voucher.gia_giam_toi_da){
+					discountAmout = voucher.gia_giam_toi_da;
+				}
+			}
+			totalVoucherDiscount = Math.min(discountAmout, totalMerchadiseValue);
+			//quan trọng trừ số lượng voucher
+
+			const [affected] = await Voucher.update(
+				{ so_luong: Sequelize.literal('so_luong - 1') },
+				{
+					where: { id: voucher.id, so_luong: { [Op.gt]: 0 } },
+					transaction: t
+				}
+			);
+
+			if (affected === 0) {
+				throw {status:400, thong_bao:"Voucher đã hết"}
+			}
+			await voucher.increment('da_dung',{by: 1, transaction: t});
+		}
+		const createDonHangId : number[] = [];
+		const  listOrderForSocket: {shopId: number, orderId: number,tam_tinh: number}[] = [];
+		
+		for(const [shopId, group] of shopGroups){
+			//phân bô  chia voucher cho shop
+			let  giaGiamPhanBo = 0;
+			if(totalMerchadiseValue > 0){
+				const tyLe = group.tam_tinh / totalMerchadiseValue;
+				giaGiamPhanBo = Math.round(totalVoucherDiscount * tyLe);
+			}
+			//tạo record dơn hàng
+			const ma_dh = generateOrderCode();
+			const newOrder = await DonHang.create({
+				ma_dh: ma_dh, id_user: id_user_mua, id_shop: shopId,
+				ten_nguoi_nhan: tenNguoiNhan,
+				dien_thoai: sdtNguoiNhan,
+				dia_chi_gh: diaChiFull,
+				ghi_chu,
+				id_pttt: id_pttt,
+				trang_thai_dh: 0,
+				tam_tinh: group.tam_tinh,
+				phi_vc: FIXED_SHIPPING_FEE,
+				giam_gia: giaGiamPhanBo,
+				tong_tien: group.tam_tinh + FIXED_SHIPPING_FEE - giaGiamPhanBo,
+				id_km: id_km || null
+			},{transaction: t});
+			
+			createDonHangId.push(newOrder.id);
+			listOrderForSocket.push({
+				shopId: shopId,
+				orderId:newOrder.id,
+				tam_tinh: group.tam_tinh
+			})
+			if(id_km){
+				await KhuyenMaiUser.create({
+					id_user: id_user_mua,
+					id_km: id_km,
+					id_dh: newOrder.id
+				},{transaction: t});
+			}
+			
+			for(const item of group.items){
+				const processResult = await processDonHangImg(item.img);
+				if(processResult) createdFile.push(processResult);
+				const DonHangCTImgPath = processResult ? processFilePath(processResult) : null;
+				await DonHangChiTiet.create({
+					id_dh: newOrder.id, id_sp: item.id_sp, id_bt: item.id_bt,ten_sp: item.ten_sp, img: DonHangCTImgPath,
+					so_luong: item.so_luong, gia: item.gia_da_giam, thanh_tien: item.thanh_tien
+				},{transaction: t});
+				if(item.is_bienthe){
+					await SanPhamBienThe.decrement('so_luong',{by: item.so_luong, where: {id: item.id_bt}, transaction: t});
+				}else{
+					await SanPham.decrement('so_luong',{by: item.so_luong, where: {id: item.id_sp},transaction:t});
+				}
+			}
+		}
+		//xóa giỏ hàng
+		const gioHang = await GioHang.findOne({where: {id_user: id_user_mua}, attributes: ['id'], transaction: t});
+		if(gioHang){
+			const deleteCondition = items.map((i)=>({
+				id_gh: gioHang.id, id_sp: i.id_sp, id_bt: i.id_bt || null
+			}));//xóa gh cchi tiết thỏa các diều kiên trên
+			
+			if(deleteCondition.length > 0){
+				await GioHangChiTiet.destroy({where: {[Op.or]: deleteCondition}, transaction: t});//nó sẽ xóa những thằng thỏa mảng điều kiện trên
+			}
+			
+		}
+		await t.commit();
+		//gửi thông báo
+		try {
+			const io = req.app.get('io');
+			const templateShop = thongBaoTemplate[noficationType.DON_HANG_MOI];
+			// for(const orderInfo of listOrderForSocket){
+				
+			// 	const newShopNotif = await ThongBao.create({
+			// 		id_user: orderInfo.shopId,
+			// 		tieu_de: noficationType.DON_HANG_MOI,
+			// 		noi_dung: templateShop.content(orderInfo.tam_tinh),
+			// 		loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+			// 		id_tham_chieu: orderInfo.orderId,
+			// 		vai_tro_nhan: VAI_TRO_NHAN.SHOP,
+			// 		da_doc: 0
+			// 	});
+			// 	io.to(buildRoom.shop(orderInfo.shopId)).emit(SocketRoomName.notificationNew,newShopNotif.toJSON());
+				
+			// }
+			await Promise.all(
+			listOrderForSocket.map(async orderInfo=>{
+				const newShopNotif = await ThongBao.create({
+					id_user: orderInfo.shopId,
+					tieu_de: noficationType.DON_HANG_MOI,
+					noi_dung: templateShop.content(orderInfo.tam_tinh),
+					loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+					id_tham_chieu: orderInfo.orderId,
+					vai_tro_nhan: VAI_TRO_NHAN.SHOP,
+					da_doc: 0
+				})
+				io.to(buildRoom.shop(orderInfo.shopId)).emit(SocketRoomName.notificationNew,newShopNotif.toJSON())
+			})
+			)
+			const template = thongBaoTemplate[noficationType.DAT_HANG_THANH_CONG]
+			const newUserNotif = await ThongBao.create({
+				id_user: id_user_mua,
+				tieu_de: noficationType.DAT_HANG_THANH_CONG,
+				noi_dung: template.content(listOrderForSocket),
+				loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+				id_tham_chieu: null,
+				vai_tro_nhan: VAI_TRO_NHAN.PUBLIC,
+				da_doc: 0
+			});
+			io.to(buildRoom.user(id_user_mua)).emit(SocketRoomName.notificationNew,newUserNotif.toJSON());
+		} catch (socketError) {
+			const  err = socketError as  CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn thông báo đặt hàng thành công: ${err.message}`, { stack: err.stack });
+		}
+		
+		
+		return res.status(200).json({
+			thong_bao: "Đặt hàng thành công", data: {list_don_hang: createDonHangId,payment_method_code: phuongThucThanhToan.code}, success: true
+		})
+	} catch (error) {
+		
+		await t.rollback();
+		const err = error as  CustomError;
+		
+		if(createdFile.length > 0){
+			await Promise.all(createdFile.map(filePath=>{
+				return fs.promises.unlink(filePath).catch(err=>{
+					console.warn(` Không xóa được file optimized ${filePath}:`, err.message);
+					return Promise.resolve();
+				})
+			}))
+		}
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lõi máy  chủ khi đặt hàng";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi tạo đơn hàng ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+
+		
+	}
+})
+router.get<{}, {}, {}, GetallDonHang>('/don-hang/lich-su',checkAuth,async(req , res)=>{
+	try {
+		
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1) * limit;
+		const whereCondition: WhereOptions<DonHang> = {
+			id_user: id_user
+		}
+		if(req.query.trang_thai !== null && req.query.trang_thai !== undefined){
+			const trang_thai = Number(req.query.trang_thai);
+			if(!isNaN(trang_thai)){
+				whereCondition.trang_thai_dh = trang_thai
+			}
+		}
+		const {rows, count} = await DonHang.findAndCountAll({
+			limit: limit,
+			offset: offset,
+			order: [['createdAt','DESC']],
+			where: whereCondition,
+			include: [{
+				model: DonHangChiTiet,
+				as: 'chi_tiet_dh',	
+				attributes: ['id','id_dh','id_sp','id_bt','ten_sp','img','so_luong','gia','thanh_tien']
+			},{
+				model: User,
+				as: 'shop',
+				attributes: ['ten_shop','id','hinh']
+			},{
+				model: PTTT,
+				as: 'pttt',
+				attributes: ['ten_pt','code']
+			}],
+			distinct: true
+		});
+		const totalPages = Math.ceil(count / limit);
+		const result = {
+			data: rows,
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			}
+		}
+		return res.status(200).json({result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lịch sử đơn hàng ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi xem lịch sử đơn hàng", success: false});
+	}
+})
+router.get<getDonHangDetailInput>('/don-hang/lich-su/:id',checkAuth,validate(getDonHangDetailSchema),async(req, res)=>{
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_nguoi_mua = userPayload.id;
+		const donHang = await DonHang.findOne({
+			where: {
+				id: id,
+				id_user: id_nguoi_mua
+			},
+			include: [{
+				model: DonHangChiTiet,
+				as: 'chi_tiet_dh',
+				attributes: ['id','ten_sp','img','so_luong','gia','thanh_tien','id_bt'],
+			},{
+				model: User,
+				as:'shop',
+				attributes: ['id','ten_shop','hinh']
+			},{
+				model: PTTT,
+				as: 'pttt',
+				attributes: ['ten_pt','code']
+			},{
+				model: Voucher,
+				as: 'voucher',
+				attributes: ['ten_km','code','loai_km','gia_tri_giam'],
+				required: false//left join có voucher thì hiện ko thì thôi
+			}]
+		});
+		if(!donHang){
+			throw {status: 404, thong_bao: "Đơn hàng không tòn tại hoặc bạn không có quyền xem"};
+		}
+		return res.status(200).json({data: donHang, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		
+		const status = err.status ||500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi xem chi tiết đơn hàng"
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.put<cancelDonHangInput['params'], {},cancelDonHangInput['body']>('/don-hang/huy/:id',checkAuth,validate(cancelDonHangSchema),async(req, res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const {id} = req.params;
+		const {ly_do} = req.body;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const donHang = await DonHang.findOne({
+			where: {
+				id: id,
+				id_user: id_user
+			},
+			include: [{
+				model: DonHangChiTiet,
+				as: 'chi_tiet_dh',
+				attributes: ['id_sp','id_bt','so_luong']
+			}],
+			lock: true,//lock do ngf này để tránh admin đan xxacs nhận mà user lại bấm hủy cùng lúc
+			transaction: t
+		});
+		if(!donHang){
+			throw {status: 404, thong_bao: "Đơn hàng không tồn tại"};
+		}
+		if(normalizeBoolean(donHang.trang_thai_thanh_toan) === THANH_TOAN_THANH_CONG_VALUE){
+			throw {status: 400, thong_bao: "Đơn hàng đã thanh toán không thể hủy. Vui lòng liên hệ CSKH để được hỗ trợ hoàn tiền."}
+		}
+		//kiểm trả trạng thái
+		if(donHang.trang_thai_dh === DON_HANG_HUY_VALUE){
+			throw {status: 400, thong_bao: "Đơn hàng này đã  bị hủy từ trước đó rồi"};
+		}
+		if(donHang.trang_thai_dh !== 0){
+			throw {status: 400, thong_bao: "Đơn hàng đang giao  cho đơn vị vẫn chuyển hoặc shop đang chuẩn bị hàng nên không hủy được. Vui lòng liên hệ shop hoặc CSKH đẻ hủy đơn hàng"};
+		}
+		//cặp nhất trang thái đơn  Hủy -1
+		await donHang.update({
+			trang_thai_dh: DON_HANG_HUY_VALUE,
+			ly_do_huy: ly_do || "Khách tự hủy"
+		},{transaction: t});
+		const donHangItem = donHang.toJSON() as DonHangWithChiTiet;
+		//hoàn kho (trả lại số lượng sản phẩm)
+		if(donHangItem.chi_tiet_dh && donHangItem.chi_tiet_dh.length > 0){
+			for(const item of donHangItem.chi_tiet_dh){
+				
+				if(item.id_bt){
+					await SanPhamBienThe.increment('so_luong',{
+						by: item.so_luong,
+						where: {id: item.id_bt},
+						transaction: t
+					})
+				}else{
+					await SanPham.increment('so_luong',{
+					by: item.so_luong,
+					where: {id: item.id_sp},
+					transaction: t
+				})
+				}
+			}
+		}
+		//hoàn voucher nếu đơnq có dùng voucher
+		if(donHang.id_km){
+			//xóa lịch xsuwr dùng voucher của user trong bang km user đẻ khi  dùng lại vãn đc tính là chưa dùng
+			await KhuyenMaiUser.destroy({
+				where: {
+					id_km: donHang.id_km,
+					id_dh: donHang.id,
+					id_user: id_user
+				},
+				transaction: t
+			})
+			//cộng lại số lượng voucher cho hệ thông
+			await Voucher.increment('so_luong',{
+				by: 1,
+				where: {id: donHang.id_km},
+				transaction: t
+			})
+			// trừ đi số lượng da dung 
+			await Voucher.decrement('da_dung',{
+				by: 1,
+				where: {id: donHang.id_km},
+				transaction:t 
+			});
+		}
+		await t.commit();
+		try {
+			const io = req.app.get('io');
+			const [newUserNotif, newShopNotif, newAdminNotif] = await Promise.all([
+				
+				ThongBao.create({
+					id_user: donHang.id_user,
+					tieu_de: "Hủy đơn hàng",
+					noi_dung: ` Bạn đã hủy đơn hàng ${donHang.ma_dh}`,
+					loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+					id_tham_chieu: donHang.id,
+					vai_tro_nhan: VAI_TRO_NHAN.PUBLIC,
+					da_doc:  0
+				}),
+				ThongBao.create({
+					id_user: donHang.id_shop,
+					tieu_de: "Hủy đơn hàng",
+					noi_dung: `Đơn hàng ${donHang.ma_dh} đã bị khách hàng hủy`,
+					loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+					id_tham_chieu: donHang.id,
+					vai_tro_nhan: VAI_TRO_NHAN.SHOP,
+					da_doc:  0
+				}),
+				ThongBao.create({
+					id_user: ADMIN_ROLE_ID,
+					tieu_de: "Khách hàng hủy đơn hàng",
+					noi_dung:  `Khách hàng ${donHang.id_user} đã hủy đơn hàng ${donHang.ma_dh}` ,
+					loai_thong_bao: LOAI_THONG_BAO.DON_HANG,
+					id_tham_chieu: donHang.id,
+					vai_tro_nhan: VAI_TRO_NHAN.ADMIN,
+					da_doc:  0
+				})
+			]);
+			io.to(buildRoom.user(donHang.id_user)).emit(SocketRoomName.notificationNew,newUserNotif.toJSON());
+			io.to(buildRoom.shop(donHang.id_shop)).emit(SocketRoomName.notificationNew,newShopNotif.toJSON());
+			io.to(buildRoom.admin()).emit(SocketRoomName.notificationNew,newAdminNotif.toJSON());
+			
+			logger.info(`[SOCKET] Đã bắn thông báo hủy đơn hàng ${donHang.id} `);
+		} catch (socketError) {
+			const err = socketError as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn thông báo hủy đơn hàng: ${err.message}`, { stack: err.stack });
+		}
+		return res.status(200).json({thong_bao: "Hủy đơn  hàng thành công", success: true});
+	} catch (error) {
+		await t.rollback();
+		const err = error as CustomError;
+		
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao  || "Lỗi máy chủ khi hủy đơn hàng";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi hủy đơn hàng của user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+// thanh toán payqs
+// router.post<{},{},createThanhToanInput>('/created-payment-link',checkAuth,validate(createThanhToanSchema),resendLimiterPaymentOnline,async(req ,res)=>{
+// 	let t
+// 	try {
+// 		const {id_dh} = req.body;
+// 		const userPayload = req.user as AuthUser;
+// 		const id_user = userPayload.id
+// 		//logic kieemr trả  đơn hàng có thể tạo link  thanh toán cho đơn hàng này ko
+// 		const CACHE_KEY = `${REDIS_KEYS.PAYMENT.PAYOS}donhang_${id_dh}`;
+// 		const exstingUrl = await redisClient.get(CACHE_KEY);
+		
+// 		if(exstingUrl){
+// 			logger.info(`Lấy link PayOS từ Redis cho đơn hàng ${id_dh}`);
+// 			return res.status(200).json({url: exstingUrl, success: true});
+// 		}
+// 		t = await sequelize.transaction();
+// 		const donHang = await DonHang.findOne({
+// 			where: {id: id_dh, id_user: id_user},
+// 			transaction: t,
+// 			lock: t.LOCK.UPDATE
+// 		});
+// 		if(!donHang){
+// 			throw {status: 404, thong_bao: "Không tìm  thấy đơn hàng hoặc bạn không có quyền thanh toán"};
+// 		}
+// 		if(!donHang.tong_tien || donHang.tong_tien < 0){
+// 			throw {status: 400, thong_bao: "Số tiền thanh toán không hợp lệ"}
+// 		}
+// 		if(donHang.id_pttt !== THANH_TOAN_ONLINE){
+// 			throw {status: 400, thong_bao: "Phương thức thanh toán không phải là thanh toán online"}
+// 		}
+// 		if(donHang.trang_thai_dh !== DON_HANG_DA_CHUA_XAC_NHAN){
+// 			throw {status: 400, thong_bao: "Đơn hàng không ở trạng thái có thể thanh toán"}
+// 		}
+// 		if(normalizeBoolean(donHang.trang_thai_thanh_toan) === THANH_TOAN_THANH_CONG_VALUE){
+// 			throw {status: 400, thong_bao: "Đơn hàng này đã được thanh toán rồi"};
+// 		}
+		
+
+// 		const timestampSuffix = Date.now().toString().slice(-6);
+// 		const generatedOrderCodeOnline = Number(`${id_dh}${timestampSuffix}`);
+// 		donHang.ma_giao_dich = generatedOrderCodeOnline;
+// 		await donHang.save({transaction: t});
+		
+// 		await t.commit();
+// 		t = null;
+// 		const expiredAt = Math.floor(Date.now() / 1000) + (10 * 60);
+// 		const thanhToanBody:ThanhToanBody  = {
+// 			orderCode: generatedOrderCodeOnline,
+// 			amount: donHang.tong_tien,//donHang.tong_tien,
+// 			description: `Thanh toan don hang`,
+// 			cancelUrl: `${process.env.CLENT}/checkout/result?id_dh=${donHang.id}`,
+// 			returnUrl: `${process.env.CLENT}/checkout/result?id_dh=${donHang.id}`,
+// 			expiredAt: expiredAt
+// 		};
+		
+// 		let payLinkResponse;
+// 		try {
+// 		 	payLinkResponse = await payos.paymentRequests.create(thanhToanBody)
+// 		} catch (payosError: any) {
+// 			logger.error(`[PAYOS ERROR] Lỗi tạo link thanh toán: ${payosError.message || payosError}`);
+// 			throw {status: 400, thong_bao: "Cổng thanh toán đang bảo trì, vui lòng thử lại sau ít phút"}
+// 		}
+// 		await redisClient.setEx(CACHE_KEY, REDIS_TTL.PAYMENT_ONLINE, payLinkResponse.checkoutUrl);
+
+// 		return res.status(200).json({
+// 			url: payLinkResponse.checkoutUrl,
+// 			success: true
+// 		})
+// 	} catch (error) {
+// 		const err = error as CustomError;
+// 		if (t) await t.rollback();
+// 		const status = err.status || 500;
+// 		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  tạo thanh toán";
+// 		if(status >= 500){
+// 			logger.error(`[CRITICAL] Lỗi APi tạo thanh toán online ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+// 		}
+// 		return res.status(status).json({thong_bao, success: false})
+// 	}
+// })
+//thanh toán sepay
+router.post<{},{},createThanhToanInput>('/created-payment-sepay-link',checkAuth,validate(createThanhToanSchema),resendLimiterPaymentOnline,async(req ,res)=>{
+	let t
+	try {
+		const {id_dh} = req.body;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id
+		// await redisClient.del(`${REDIS_KEYS.PAYMENT.SEPAY}donhang_${id_dh}`);
+		//logic kieemr trả  đơn hàng có thể tạo link  thanh toán cho đơn hàng này ko
+		const CACHE_KEY = `${REDIS_KEYS.PAYMENT.PAYOS}donhang_${id_dh}`;
+		const cacheData = await redisClient.get(CACHE_KEY);
+		
+		if(cacheData){
+			logger.info(`Lấy link Sepay từ Redis cho đơn hàng ${id_dh}`);
+			return res.status(200).json(JSON.parse(cacheData));
+		}
+		t = await sequelize.transaction();
+		const donHang = await DonHang.findOne({
+			where: {id: id_dh, id_user: id_user},
+			transaction: t,
+			lock: t.LOCK.UPDATE
+		});
+		if(!donHang){
+			throw {status: 404, thong_bao: "Không tìm  thấy đơn hàng hoặc bạn không có quyền thanh toán"};
+		}
+		if(!donHang.tong_tien || donHang.tong_tien < 0){
+			throw {status: 400, thong_bao: "Số tiền thanh toán không hợp lệ"}
+		}
+		if(donHang.id_pttt !== THANH_TOAN_ONLINE){
+			throw {status: 400, thong_bao: "Phương thức thanh toán không phải là thanh toán online"}
+		}
+		if(donHang.trang_thai_dh !== DON_HANG_DA_CHUA_XAC_NHAN){
+			throw {status: 400, thong_bao: "Đơn hàng không ở trạng thái có thể thanh toán"}
+		}
+		if(normalizeBoolean(donHang.trang_thai_thanh_toan) === THANH_TOAN_THANH_CONG_VALUE){
+			throw {status: 400, thong_bao: "Đơn hàng này đã được thanh toán rồi"};
+		}
+		let currentTransactionCode = donHang.ma_giao_dich;
+		if(!currentTransactionCode){
+			const timestampSuffix = Date.now().toString().slice(-6);
+			currentTransactionCode = Number(`${id_dh}${timestampSuffix}`);
+			donHang.ma_giao_dich = currentTransactionCode;
+			await donHang.save({transaction: t});
+		}
+		
+		
+		await t.commit();
+		t = null;
+		const checkoutURL = sepayClient.checkout.initCheckoutUrl();
+		const checkoutFromFields = sepayClient.checkout.initOneTimePaymentFields({
+			payment_method: 'BANK_TRANSFER',
+			order_invoice_number: currentTransactionCode.toString(),
+			order_amount: donHang.tong_tien,
+			currency: 'VND',
+			order_description: `Thanh toan don hang ${id_dh}`,
+			success_url: `${process.env.CLENT}/checkout/result?id_dh=${donHang.id}`,
+			error_url: `${process.env.CLENT}/checkout/result?id_dh=${donHang.id}`,
+			cancel_url: `${process.env.CLENT}/checkout/result?id_dh=${donHang.id}`
+		})
+		//se pay có thể xử lý giao dich bị trung mã ko như payqs
+		
+		const  resData = {
+			url: checkoutURL,
+			success: true,
+			formData: checkoutFromFields
+		}
+		await redisClient.setEx(CACHE_KEY, REDIS_TTL.PAYMENT_ONLINE, JSON.stringify(resData));
+
+		return res.status(200).json(resData)
+	} catch (error) {
+		const err = error as CustomError;
+		if (t) await t.rollback();
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  tạo thanh toán";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi tạo thanh toán online ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+	}
+})
+//api web hook payqs
+// router.post('/payos-webhook',async(req, res)=>{
+// 	try {
+// 		// console.log(' PAYOS WEBHOOK HIT', req.body);
+// 		const payload = req.body as PayOswebhookPayLoad<PayOsWebhookData>;
+// 		//xử lý logic cập nhật đơn hàng 
+// 		const webhookData = verifyPayOsWebhook(payload);
+		
+// 		//code === 00 thành công
+// 		//payOs gửi code ngoài data
+// 		if(payload.code !== '00'){
+// 			logger.info(`Webhook PayOS: Nhận trạng thái hủy/lỗi (${payload.desc}) cho mã ${payload.data?.orderCode || 'Unknown'}`);
+// 			return res.status(200).json({thong_bao: "Đã nhận được trạng thái lỗi, đã bỏ qua.",success: true});
+// 		} 
+		
+		
+// 		const donhang = await DonHang.findOne({
+// 			where: {ma_giao_dich: webhookData.orderCode}
+// 		});
+// 		if(!donhang){
+// 			logger.info(`Webhook PayOS: Không tìm thấy đơn hàng với mã giao dịch: ${webhookData.orderCode}`);
+// 			return res.status(200).json({thong_bao: "Lỗi ko tìm thấy đơn hàng.", success: true});
+// 		}
+// 		if (donhang && donhang.id) {
+// 			await redisClient.del(`${REDIS_KEYS.PAYMENT.PAYOS}donhang_${donhang.id}`);
+// 		}
+// 		if(normalizeBoolean(donhang.trang_thai_thanh_toan)  !== THANH_TOAN_THANH_CONG_VALUE){
+// 			if(donhang.tong_tien === webhookData.amount){
+// 				donhang.trang_thai_thanh_toan = THANH_TOAN_THANH_CONG_VALUE;
+				
+// 				await donhang.save();
+// 				logger.info(`[THÀNH CÔNG] Đơn hàng ${webhookData.orderCode} đã thanh toán và cập nhật trạng thái. Số tiền: ${webhookData.amount}`);
+// 			}else{
+// 				logger.warn(`[CẢNH BÁO LỆCH TIỀN] Đơn ${webhookData.orderCode}! DB yêu cầu: ${donhang.tong_tien}, Khách chuyển: ${webhookData.amount}`);
+// 			}
+// 		}else{
+// 			logger.info(`Webhook PayOS: Đơn hàng ${donhang.id} đã được cập nhật thanh toán trước đó rồi, bỏ qua.`);
+// 		}
+// 		logger.info(`Đơn hàng ${webhookData.orderCode} thanh toán thành công. Số tiền: ${webhookData.amount}`);
+// 		return res.json({success: true});
+// 	} catch (error) {
+// 		const err = error as CustomError;
+		
+		
+// 		const thong_bao = err.thong_bao||"Lỗi máy chủ khi  thanh toán";
+// 		logger.error(`[WEBHOOK ERROR] ${thong_bao}`, {stack: err.stack});
+// 		return res.json({ success: true});
+// 	}
+// })
+//api web hook sepay
+router.post('/sepay-webhook',async(req, res)=>{
+	try {
+		// console.log(' PAYOS WEBHOOK HIT', req.body);
+		const payload = req.body as SePayPGWebhookPayload;
+		//xử lý logic cập nhật đơn hàng 
+		const secretKeySepayWebHook = process.env.SEPAY_CHECK_KEY_IPN || "nhin gi ma nhin";
+		const receivedKey = req.headers['x-secret-key'];
+		if(receivedKey !== secretKeySepayWebHook){
+			logger.warn(`[Cảnh bảo] Có kẻ gian gọi Webhook SePay PG sai Secret Key! Key nhận được: ${receivedKey}`);
+			return res.status(401).json({ success: false, thong_bao: "Unauthorized: Sai Secret Key" });
+		}
+		
+		
+		//code === 00 thành công
+		console.log(payload.order.order_status);
+		//payOs gửi code ngoài data
+		if(payload.notification_type !== 'ORDER_PAID' || payload.order.order_status !== 'CAPTURED'){
+			logger.info(`Webhook SEpay: Nhận trạng thái hủy/lỗi (${payload.notification_type}) cho đơn ${payload.order.order_invoice_number || "Unknow"}`);
+			return res.status(200).json({thong_bao: "Đã nhận được trạng thái lỗi, đã bỏ qua.",success: true});
+		} 
+		
+		const maGiaoDich = Number(payload.order.order_invoice_number);
+		const amountPaid = Number(payload.order.order_amount);
+		const donhang = await DonHang.findOne({
+			where: {ma_giao_dich: maGiaoDich}
+		});
+		if(!donhang){
+			logger.info(`Webhook Sepay: Không tìm thấy đơn hàng với mã giao dịch: ${maGiaoDich}`);
+			return res.status(200).json({thong_bao: "Lỗi ko tìm thấy đơn hàng.", success: true});
+		}
+		if (donhang && donhang.id) {
+			await redisClient.del(`${REDIS_KEYS.PAYMENT.SEPAY}donhang_${donhang.id}`);
+		}
+		if(normalizeBoolean(donhang.trang_thai_thanh_toan)  !== THANH_TOAN_THANH_CONG_VALUE){
+			if(donhang.tong_tien === amountPaid){
+				donhang.trang_thai_thanh_toan = THANH_TOAN_THANH_CONG_VALUE;
+				
+				await donhang.save();
+				logger.info(`[THÀNH CÔNG] Đơn hàng ${maGiaoDich} đã thanh toán và cập nhật trạng thái. Số tiền: ${amountPaid}`);
+			}else{
+				logger.warn(`[CẢNH BÁO LỆCH TIỀN] Đơn ${maGiaoDich}! DB yêu cầu: ${donhang.tong_tien}, Khách chuyển: ${amountPaid}`);
+			}
+		}else{
+			logger.info(`Webhook Sepay: Đơn hàng ${donhang.id} đã được cập nhật thanh toán trước đó rồi, bỏ qua.`);
+		}
+		logger.info(`Đơn hàng ${maGiaoDich} thanh toán thành công. Số tiền: ${amountPaid}`);
+		return res.json({success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		
+		
+		const thong_bao = err.thong_bao||"Lỗi máy chủ khi  thanh toán";
+		logger.error(`[WEBHOOK ERROR] ${thong_bao}`, {stack: err.stack});
+		return res.json({ success: true});
+	}
+})
+//khách hàng ẤN xác nhận đơn hàng thì + tiền dcho  shop
+router.put<getDonHangDetailInput>('/don-hang/da-nhan-hang/:id',checkAuth,validate(getDonHangDetailSchema),async(req , res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const  {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const donHang = await DonHang.findOne({
+			where: {
+				id: id,
+				id_user: id_user,
+				trang_thai_dh: DON_HANG_DA_GIAO_VALUE,
+				trang_thai_thanh_toan: THANH_TOAN_THANH_CONG_VALUE,
+				ngay_hoan_thanh: null,
+			}
+		, transaction: t});
+		if(!donHang){
+			throw {status: 404, thong_bao: 'Đơn hàng không hợp lệ hoặc đã xác nhận rồi'};
+		}
+		//tìm vi shop don hân nay
+		const viShop =await ViShop.findOne({
+			where: {id_shop: donHang.id_shop},
+			transaction: t
+		});
+		if(!viShop){
+			throw {status: 404, thong_bao: "Lỗi  hệ thông: Không tìm thấy ví shop"};
+		}
+		//cọng tiền và update dơn
+		const tienDonHang = Number(donHang.tong_tien);
+		await viShop.increment('so_du',{
+			by: tienDonHang,
+			transaction: t
+		});
+		await donHang.update({
+			ngay_hoan_thanh: new Date()
+		},{
+			transaction: t
+		});
+		await  t.commit();
+		return res.status(200).json({thong_bao: "Đã xác nhận nhạn hàng. Cảm ơn quý khách"});
+	} catch (error) {
+		await t.rollback();
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  xác nhận đơn  hàng";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi đã nhận hàng ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+//fe sẽ gọi api này liên  tục để biết tình trạng thanh toán nếu isPaid là failed sẽ báo là đang xử lý
+router.get<ParamsThanhToanIdInput>('/thanh-toan/check-status/:id',checkAuth,validate(ParamsThanhToanIdSchema),async(req, res)=>{
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const donHang = await DonHang.findOne({
+			where: {id: id,id_user: id_user},
+			attributes: ['id', 'trang_thai_thanh_toan','trang_thai_dh','tong_tien','id_pttt']
+		});
+		if(!donHang){
+			throw {status: 404, thong_bao: "Đơn hàng không tồn tại"};
+		}
+		const phuongThucThanhToan = await PTTT.findByPk(donHang.id_pttt);
+		if(!phuongThucThanhToan){
+			throw {status: 404, thong_bao : "Phương thức thanh toán không hợp lệ"}
+		}
+		const isPaid = normalizeBoolean(donHang.trang_thai_thanh_toan) === THANH_TOAN_THANH_CONG_VALUE;
+		const isCancelled = donHang.trang_thai_dh === DON_HANG_HUY_VALUE;
+		return res.status(200).json({data: {
+			id: donHang.id,
+			is_paid: isPaid,
+			isCancelled: isCancelled,
+			payment_method_Code: phuongThucThanhToan.code
+		}, success: true})
+	} catch (error) {
+		const err = error as CustomError;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  xem trạng thái đơn hàng";
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi kiểm tra trạng thái 1 đơn hàng ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao,success: false})
+	}
+})
+//api nếu khách hang huy thanh toan tren payqs khi fe trả về chek  out /cancel
+router.put<ParamsThanhToanIdInput>('/thanh-toan/huy-giao-dich/:id',checkAuth, validate(ParamsThanhToanIdSchema),async(req ,res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const  donHang = await DonHang.findOne({
+			where: {id: id, id_user: id_user},
+			include: [{
+				model: DonHangChiTiet,
+				as: "chi_tiet_dh",
+				attributes: ['id_bt','id_sp','so_luong']
+			}],
+			lock: true,
+			transaction:t
+		});
+		if(!donHang){
+			throw {status: 404, thong_bao: "Đơn hàng không tồn tại hoặc bạn không có quyền truy cập"};
+		}
+		if (donHang.trang_thai_dh === DON_HANG_HUY_VALUE) {
+            await t.commit(); // Commit rỗng
+            return res.status(200).json({ thong_bao: "Đơn hàng đã được hủy trước đó", success: true });
+        }
+		if(normalizeBoolean(donHang.trang_thai_thanh_toan) === THANH_TOAN_THANH_CONG_VALUE){
+			throw {status: 400, thong_bao: "Đơn hàng đã thanh toán thành công,không thể hủy giao  dịch"};
+		}
+		donHang.trang_thai_dh = DON_HANG_HUY_VALUE;
+		donHang.ly_do_huy = "Khách hủy tại cổng thanh toán";
+		await donHang.save({transaction:t});
+		const donHangItem = donHang.toJSON() as DonHangWithChiTiet;
+		//hoàn kho (trả lại số lượng sản phẩm)
+		if(donHangItem.chi_tiet_dh && donHangItem.chi_tiet_dh.length > 0){
+			for(const item of donHangItem.chi_tiet_dh){
+				
+				if(item.id_bt){
+					await SanPhamBienThe.increment('so_luong',{
+						by: item.so_luong,
+						where: {id: item.id_bt},
+						transaction: t
+					})
+				}else{
+					await SanPham.increment('so_luong',{
+					by: item.so_luong,
+					where: {id: item.id_sp},
+					transaction: t
+				})
+				}
+			}
+		}
+		//hoàn voucher nếu đơnq có dùng voucher
+		if(donHang.id_km){
+			//xóa lịch xsuwr dùng voucher của user trong bang km user đẻ khi  dùng lại vãn đc tính là chưa dùng
+			await KhuyenMaiUser.destroy({
+				where: {
+					id_km: donHang.id_km,
+					id_dh: donHang.id,
+					id_user: id_user
+				},
+				transaction: t
+			})
+			//cộng lại số lượng voucher cho hệ thông
+			await Voucher.increment('so_luong',{
+				by: 1,
+				where: {id: donHang.id_km},
+				transaction: t
+			})
+			// trừ đi số lượng da dung 
+			await Voucher.decrement('da_dung',{
+				by: 1,
+				where: {id: donHang.id_km},
+				transaction:t 
+			});
+		}
+		await t.commit();
+		return res.status(200).json({thong_bao: "Đã hủy đơn hàng khi  không thanh toán", success: true})
+	} catch (error) {
+		await t.rollback();
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  hủy đơn  hàng";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi thanh toán online hủy giao dịch ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+//api load danh sách chờ thanh toán khi người dung ko kip thanh toán ở online khi  ấn vô nút thanh toán lại gọi lại created-payment để  tạo lại thanh toán
+//trong th người dung lỡ dóng tab thanh toán created-payment thong qua redis
+router.get<{},{},{},GetAllChuaThanhToan>('/thanh-toan/cho', checkAuth ,async(req ,res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1) * limit; 
+		const {rows, count} = await DonHang.findAndCountAll({
+			where: {
+				id_user: id_user,
+				trang_thai_dh: DON_HANG_DA_CHUA_XAC_NHAN,
+				id_pttt: THANH_TOAN_ONLINE,
+				trang_thai_thanh_toan: {[Op.not]: THANH_TOAN_THANH_CONG_VALUE}
+			},
+			offset: offset,
+			limit: limit,
+			order: [['createdAt','DESC']],
+			attributes: ['id','tong_tien','createdAt']
+		});
+		const totalPages = Math.ceil(count/ limit);
+		const resData = {
+			data: rows,
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			},
+			success: true
+		}
+		return res.status(200).json(resData);
+	} catch (error) {
+		const  err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách  chưa  thanh toán ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy danh sách  chưa  thanh toán", success: false});
+	}
+})
+
+
+//api rút tiền shop
+router.post<{},{},rutTienInput>('/shop/yeu-cau-rut-tien',checkShop, validate(rutTienSchema), async(req , res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const  userPayload = req.user  as AuthUser;
+		const id_shop = userPayload.id;
+		const {so_tien, ten_ngan_hang, so_tk, ten_chu_tk, ghi_chu} = req.body
+		const viShop = await ViShop.findOne({
+			where: {id_shop: id_shop}
+			,transaction: t,
+			lock: true
+		})
+		
+		if(!viShop){
+			throw {status: 404, thong_bao: "Ví của  hàng không tồn tại. Vui lòng liên hệ admin"};
+		}
+		if(viShop.so_du < so_tien){
+			throw {status: 400, thong_bao: ` Số dữ không đủ. Hiện tại bbanj có ${viShop.so_du}đ`};
+		}
+		//trừ số dữ truoc đam bảo an toàn
+		await viShop.decrement('so_du',{by: so_tien, transaction: t});
+		
+		//tạo trang thái yêu  cầu rút tiền chờ xử  lý
+		const yeuCau = await YeuCauRutTien.create({
+			id_shop: id_shop,
+			so_tien: so_tien,
+			so_tk: so_tk,
+			ten_ngan_hang: ten_ngan_hang,
+			ten_chu_tk: ten_chu_tk,
+			trang_thai: RUT_TIEN_PENDING_VALUE,
+			ghi_chu: ghi_chu || null
+		},{transaction: t});
+		// console.log(so_tien);
+		await t.commit();
+		
+		try {
+			const io = req.app.get('io');
+			const template = thongBaoTemplate[noficationType.YEU_CAU_RUT_TIEN];
+			const newAdminNotif = await ThongBao.create({
+				id_user: ADMIN_ROLE_ID,
+				tieu_de: noficationType.YEU_CAU_RUT_TIEN,
+				noi_dung: template.content(id_shop, Number(so_tien)),
+				loai_thong_bao: LOAI_THONG_BAO.HE_THONG,
+				id_tham_chieu: yeuCau.id,
+				vai_tro_nhan: VAI_TRO_NHAN.ADMIN,
+				da_doc: 0
+			});
+			io.to(buildRoom.admin()).emit(SocketRoomName.notificationNew, newAdminNotif);
+			logger.info(`[SOCKET] Đã bắn thông báo yêu cầu rút tiền ID ${yeuCau.id} cho Admin`);
+		} catch (socketError) {
+			const err = socketError as CustomError;
+            logger.error(`[SOCKET WARNING] Lỗi bắn thông báo rút tiền cho Admin: ${err.message}`, { stack: err.stack });
+		}
+		const soDuConLai = viShop.so_du - so_tien;
+		return res.status(200).json({thong_bao: 'Gửi yêu cầu rút tiền thành công, vui lòng chờ admin phê duyệt', success: true,
+			data: {
+				request_id: yeuCau.id,
+				so_tien_rut: so_tien,
+				so_du_con_lai: soDuConLai
+			}
+		});
+
+	} catch (error) {
+		await t.rollback();
+		const err = error as CustomError;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  gửi yêu  cầu rút tiền";
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi gửi yêu cầu rút tiền của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+	}
+})
+
+router.get<{},{},{},GetAllLichSuRutTienShop>('/shop/lich-su-rut-tien',checkShop,async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+        const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+        const offset = (page - 1) * limit;
+		const {rows, count} = await YeuCauRutTien.findAndCountAll({
+			where: {id_shop: id_shop},//chỉ lấy lịch sử của chính shop này
+			limit: limit,
+			offset: offset,
+			order: [['createdAt','DESC']],
+			attributes: ['id','ten_ngan_hang','so_tien','so_tk','trang_thai','ghi_chu','ly_do','ngay_xu_ly','createdAt','updatedAt']
+		});
+		const totalPages = Math.ceil(count / limit);
+		return res.status(200).json({
+			result: {
+				data: rows,
+				pagination: {
+					currentPage: page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				}
+			}
+			,success: true
+		})
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi xem lịch sử rút tiền của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi  lấy lịch sử rút tiền của shop", success: false})
+	}
+})
+//laays thong tin shop
+router.get('/shop/profile', checkShop,async(req ,res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const shopProfile = await User.findByPk(id_shop,{
+			attributes: ['id','ten_shop','hinh','ho_ten','email','createdAt']
+		})
+		if(!shopProfile){
+			throw {status: 404, thong_bao: "Không tìm thấy thông tin shop"};
+		}
+		return res.status(200).json({
+			data: shopProfile,
+			success: true
+		});
+	} catch (error) {
+		const  err = error as CustomError;
+		
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi lấy thông tin shop";		
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi lấy thông tin của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+//lấy  ví shop
+router.get('/shop/wallet',checkShop, async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const [viShop, tienDangCho] = await Promise.all([
+			ViShop.findOne({
+				where: {id_shop: id_shop}
+			}),
+			//đây là số dữ  đang xác nhân từ dơn hàng do khách hàng chưa  ấn vào đã nhận hàng hoạc giam tiền 3 ngày chờ xác nhận
+
+			DonHang.sum('tong_tien',{
+				where: {
+					id_shop: id_shop,
+					trang_thai_dh: DON_HANG_DA_GIAO_VALUE,
+					trang_thai_thanh_toan: THANH_TOAN_THANH_CONG_VALUE
+				}
+			})
+		]);
+		const walletData = {
+			so_du_kha_dung: viShop ? Number(viShop.so_du) :0,
+			tong_tien_da_rut: viShop ? Number(viShop.tong_da_rut) : 0,
+			so_du_dang_xac_nhan: tienDangCho || 0
+		}
+		return res.status(200).json({
+			data: walletData,
+			success: true
+		})
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy ví shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi lấy thông tin ví shop", success: false});		
+	}
+})
+router.get<{},{},{},TimKiemGoiYSP>('/tim-kiem-goi-y-san-pham',async(req , res)=>{
+	try {
+		const keyword = req.query.keyword || '';
+		const  cleanKeyWord = keyword.trim().toLowerCase().replace(/\s+/g, ' ');
+		//nếu ko có keyword hoặc rổng thì trả về mảng rổng
+		if(cleanKeyWord === ''){
+			return res.status(200).json({data:[], success: true});
+		}
+		const CACHE_KEY = `${REDIS_KEYS.SEARCH.SUGGEST}key:${cleanKeyWord}`;
+		const isEligibleForCache = cleanKeyWord.length >= 3 && cleanKeyWord.length <= 50;
+		if(isEligibleForCache){
+			const cachedata = await redisClient.get(CACHE_KEY);
+			if(cachedata){
+				return res.status(200).json(JSON.parse(cachedata));
+			}
+			
+		}
+		const sanPham = await  SanPham.findAll({
+			where: {
+				ten_sp : {
+					[Op.like]: `%${cleanKeyWord}%`//tìm kiếm gganf đúng
+				},
+				an_hien: AN_HIEN_VALUE,
+				is_active: ACTIVATED_VALUE,
+				khoa: {[Op.not]: KHOA_VALUE}
+			}
+			,limit: 5,
+			attributes: ['id','ten_sp','img','slug','createdAt'],
+			order: [['da_ban','DESC']]
+		});
+		const resData = {
+			data: sanPham,
+			success: true
+		}
+		if(sanPham.length > 0 &&  isEligibleForCache){
+			await redisClient.setEx(CACHE_KEY, REDIS_TTL.SUGGEST_SEACH, JSON.stringify(resData));
+		}
+		
+		return res.status(200).json(resData);
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi tìm kiếm sản phẩm gợi ý ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: 'Lỗi máy chủ khi  tìm kiêm  gợi ý sản phẩm', success: false});
+	}
+})
+router.get<{},{},{},ParamTimKiemSanPham>('/tim-kiem-san-pham',async(req ,res)=>{
+	try {
+		const keyword = req.query.keyword || '';
+		let limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		if(limit > 20){
+			limit = 20
+		}
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const offset = (page -1) * limit;
+		//xóa khoản trang thừa ở giũa
+		const  cleanKeyWord = keyword.trim().toLowerCase().replace(/\s+/g, ' ');
+		const CACHE_KEY = `${REDIS_KEYS.SEARCH.PREFIX}key:${cleanKeyWord}:page:${page}:limit:${limit}`;
+		const  isEligibleForCache = cleanKeyWord.length >= 3 && cleanKeyWord.length <= 50 && page === 1
+		if(isEligibleForCache){
+			const cachedata = await redisClient.get(CACHE_KEY);
+			if(cachedata){
+				return res.status(200).json(JSON.parse(cachedata));
+			}
+		}
+		const whereCondition: WhereOptions<SanPham>  = {
+			an_hien: AN_HIEN_VALUE,
+			is_active: ACTIVATED_VALUE,
+			khoa:{[Op.not]: KHOA_VALUE},
+		};
+		if(cleanKeyWord !== ''){
+			whereCondition.ten_sp = {[Op.like]: `%${cleanKeyWord}%`};
+		}
+		const {rows, count} = await SanPham.findAndCountAll({
+			where: whereCondition,
+			limit: limit,
+			offset: offset,
+			order: [['createdAt','DESC']],
+			include: [{
+				model: DM_San_Pham,
+				as: 'danh_muc',
+				attributes: ['ten_dm']
+			},{
+				model: User,
+				as: 'shop',
+				attributes: ['ten_shop','hinh']
+			}],
+			distinct: true
+		});
+		const danhSachSanPham = rows.map((sp)=>{
+				const item = sp.toJSON();
+				const phanTramGiam = item.sale;
+				const GiaGocCha = item.gia;
+				const giaDaGiamCha:number = phanTramGiam > 0 ? Math.round(GiaGocCha * (1 - phanTramGiam /100)) : GiaGocCha;
+				
+				return {
+					...item,
+					gia_da_giam: giaDaGiamCha,
+				}
+			})
+		const totalPages = Math.ceil(count / limit);
+		const resData = {
+			result: {
+				data: danhSachSanPham,
+				pagination: {
+					currentPage: page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				}
+			},
+			success: true
+		}
+		if(isEligibleForCache && rows.length > 0){
+			await redisClient.setEx(CACHE_KEY,REDIS_TTL.SEARCH,JSON.stringify(resData));
+		}
+		
+		return res.status(200).json(resData);
+	} catch (error) {
+		const err = error as  CustomError;
+		logger.error(`[CRITICAL] Lỗi APi tìm kiếm sản phẩm ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi tìm kiếm sản phẩm", success: false});
+	}
+})
+//voucher đẻ áp dụng vô  mã giảm giá
+router.get('/voucher',async(req, res)=>{
+	try {
+		const now = new Date();
+		const whereCondition : WhereOptions<Voucher> = {
+			trang_thai: VOUCHER_HOAT_DONG_VALUE,
+			so_luong: {[Op.gt]: 0},
+			ngay_bd: {[Op.lte]: now},//ngaybd nhỏ hơn hện tại
+			ngay_kt: {[Op.gte]:  now}
+		};
+		const voucher = await  Voucher.findAll({
+			where: whereCondition,
+			order: [['ngay_kt','ASC'],['so_luong','ASC']],
+			attributes: ['id','code','ten_km','gia_tri_giam','loai_km','gia_tri_don_min','gia_giam_toi_da','ngay_bd','ngay_kt','so_luong','createdAt']
+		});
+		return res.status(200).json({data: voucher, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách voucher ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "lỗi lấy danh  sách voucher", success: false});
+	}
+})
+//tin tuc
+router.get('/danh-muc-tin',async(req, res)=>{
+	try {
+		const cachedata = await redisClient.get(REDIS_KEYS.NEWS_CATEGORY.ALL);
+		if(cachedata){
+			return res.status(200).json({
+				success: true,
+				data: JSON.parse(cachedata),
+			})
+		}
+		const allDanhMuc = await DanhMucTin.findAll({
+			where: {an_hien: AN_HIEN_VALUE},
+			attributes: ['id','ten_dm','parent_id','stt'],
+			order: [['stt','ASC']],
+			raw: true
+		}) as unknown as DanhMucTinTreeNode[];
+		const danhMucMap = new Map<number, DanhMucTinTreeNode>();
+		const rootNodes: DanhMucTinTreeNode[] =[];
+		allDanhMuc.forEach((cat)=>{
+			danhMucMap.set(cat.id, {...cat, children: []});
+		})
+		allDanhMuc.forEach((cat)=>{
+			const node = danhMucMap.get(cat.id);
+			if(node){
+				if(cat.parent_id && danhMucMap.has(cat.parent_id)){
+					const  parentNode = danhMucMap.get(cat.parent_id);
+					parentNode?.children.push(node);
+				}else{
+					rootNodes.push(node);
+				}
+			}
+		});
+		await redisClient.setEx(REDIS_KEYS.NEWS_CATEGORY.ALL,REDIS_TTL.NEWS_CATEGORY,JSON.stringify(rootNodes));
+		return res.status(200).json({data: rootNodes, success: true});
+	} catch (error) {
+		const err = error as  CustomError;
+		logger.error(`[CRITICAL] Lỗi APi tìm kiếm sản phẩm ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi  danh mục tin phân cấp ", success: false});
+	}
+})
+router.get<DanhMucTinParams>('/danh-muc-tin/:id',async(req , res)=>{
+	try {
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const {id} = req.params;
+		const offset = (page -1) * limit;
+		const CACHE_KEY = `${REDIS_KEYS.NEWS_CATEGORY.PREFIX}${id}:page:${page}:limit:${limit}`;
+		const  cachedata = await redisClient.get(CACHE_KEY);
+		if(cachedata){
+			return res.status(200).json(JSON.parse(cachedata));
+		}
+		const [currentDanhMuc, allDanhMuc] = await Promise.all([
+			DanhMucTin.findOne({
+				where: {id: id, an_hien: AN_HIEN_VALUE}
+			}),
+			DanhMucTin.findAll({
+				where: {
+					parent_id: null,  
+					an_hien: AN_HIEN_VALUE
+				},
+				attributes: ['id', 'ten_dm', 'stt'],
+				order: [['stt', 'ASC']], // Sắp xếp cha
+				include: [{
+					model: DanhMucTin,
+					as: 'children',
+					where: { an_hien: AN_HIEN_VALUE }, // Chỉ lấy con đang hiện
+					attributes: ['id', 'ten_dm', 'stt'],
+					required: false, 
+					
+				}]
+			})
+		]);
+		if(!currentDanhMuc){
+			throw {status: 400, thong_bao : "Danh mục tin không tồn tại"};
+		}
+		const danhMucId = currentDanhMuc.id;
+		let  listDanhMucQuery : number[] = [];
+		if (currentDanhMuc.parent_id && currentDanhMuc.parent_id !== 0) {
+            //  Đang xem danh mục CON
+            //  Chỉ lấy tin của chính danh mục con này
+            listDanhMucQuery = [currentDanhMuc.id];
+        } else {
+            //  Đang xem danh mục CHA
+            // Lấy tin của CHA + Tin của tất cả các CON thuộc CHA đó
+            listDanhMucQuery = [currentDanhMuc.id];
+            
+            // Tìm các con của danh mục hiện tại để lấy ID
+            const childrenOfCurrent = await DanhMucTin.findAll({
+                where: { parent_id: currentDanhMuc.id, an_hien: AN_HIEN_VALUE },
+                attributes: ['id']
+            });
+            
+            const childrenIds = childrenOfCurrent.map(c => c.id);
+            listDanhMucQuery = listDanhMucQuery.concat(childrenIds);
+        }
+		const whereClause: WhereOptions<TinTuc> = {
+            an_hien: AN_HIEN_VALUE,
+            id_dm: { [Op.in]: listDanhMucQuery }
+        }
+
+        const { rows, count } = await TinTuc.findAndCountAll({
+            where: whereClause,
+            order: [['createdAt', 'DESC']], // Tin mới nhất lên đầu
+            limit: limit,
+            offset: offset,
+            attributes: ['id', 'tieu_de', 'img', 'id_dm','tac_gia', 'luot_xem']
+        });
+
+        const totalPages = Math.ceil(count / limit)
+		const resData = {
+			data: {
+				curent_danh_muc_id: danhMucId,
+				sidebar: allDanhMuc,
+				tin_tuc: rows,
+				pagination: {
+					currentPage: page,
+					limit: limit,
+					totalItem: count,
+					totalPages: totalPages
+				}
+			},
+			success: true
+		}
+		await redisClient.setEx(CACHE_KEY,REDIS_TTL.NEWS_CATEGORY_FIND_BY_ID,JSON.stringify(resData));
+		return res.status(200).json(resData);
+		
+	} catch (error) {
+		const err  =error as CustomError;
+		
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi  danh mục tin theo id";
+		if(status >=500){
+			logger.error(`[CRITICAL] Lỗi APi lấy tin tức theo  danh mục ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+	}
+})
+//nois chung than nay se cong view ngam voi moi ip vo khac
+router.get<ParamsTintucByID, {}, GetAllTinTuc>('/tin-tuc/:id',async(req ,res)=>{
+	try {
+		
+		const {id} = req.params;
+		const page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const offset = (page -1) * limit;
+		//chongs spam view bang ip
+		const  userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "unknow-ip";
+		// console.log(userIp);
+		const viewTrackKey = `${REDIS_KEYS.VIEW_TRACK_KEY.NEWS}id:${id}:ip:${userIp}`;
+		const  hasViewed = await redisClient.get(viewTrackKey);
+		if(!hasViewed){
+			await TinTuc.increment('luot_xem',{where: {id: id, an_hien: AN_HIEN_VALUE}}).catch(err => console.log(err));
+			await redisClient.setEx(viewTrackKey,REDIS_TTL.VIEW_TRACK_KEY, '1');
+		}
+		const CACHE_KEY  = `${REDIS_KEYS.NEWS_DETAL.PREFIX}${id}:page:${page}:limit:${limit}`;
+		const cachedata  = await redisClient.get(CACHE_KEY);
+		if(cachedata){
+			
+			return res.status(200).json(JSON.parse(cachedata));
+		}
+		const tinTuc = await TinTuc.findOne({
+			where: {an_hien: AN_HIEN_VALUE, id: id},
+			include: [{
+				model: DanhMucTin,
+				as: 'loai_tin_tuc',
+				attributes: ['id','ten_dm']
+			}]
+		});
+		
+		
+		if(!tinTuc){
+			throw {status: 404, thong_bao: 'Tin tức không tồn tại không thể lấy chi tiết'};
+		}
+		const tinTucItem = tinTuc.toJSON();
+		
+		const {rows, count} = await TinTuc.findAndCountAll({
+			limit: limit,
+			offset: offset,
+			where: {
+				an_hien: AN_HIEN_VALUE, id_dm: tinTuc.id_dm,
+				id: {[Op.not]: tinTuc.id}
+			},
+			attributes: ['id','tieu_de','img','id_dm','tac_gia','luot_xem','createdAt'],
+			order: [['createdAt','DESC']]
+		});
+		const totalPages = Math.ceil(count / limit);
+		const  resData = {
+			data: {
+				tin_tuc: tinTucItem,
+				tin_tuc_cung_loai: rows
+			},
+			pagination: {
+				currentPage: page,
+				limit: limit,
+				totalItem: count,
+				totalPages: totalPages
+			},
+			success:  true
+		}
+		await redisClient.setEx(CACHE_KEY, REDIS_TTL.NEWS, JSON.stringify(resData));
+		//coong 1 luot hien thi ao cho nguoi tao cache
+		
+		return res.status(200).json(resData);
+	} catch (error) {
+		const err =error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "LỖi máy cchur khi lấy chi tiêt tin tuc";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi lấy tin tức chi tiết ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+//lấy banner
+router.get<{}, {}, {}, GetBannerInput['query']>('/banner', validate(getBannerSchema), async (req, res) => {
+    try {
+        const { vi_tri } = req.query;
+
+        const banners = await Banner.findAll({
+            where: {
+                vi_tri: vi_tri,
+                an_hien: AN_HIEN_VALUE 
+            },
+           
+            order: [
+                ['stt', 'ASC'], 
+            ],
+            
+            attributes: ['id', 'name', 'stt', 'url', 'vi_tri', 'stt','img','createdAt']
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: banners
+        });
+
+    } catch (error) {
+        const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách banner ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+        return res.status(500).json({ 
+            thong_bao: "Lỗi máy chủ khi lấy danh sách banner", 
+            success: false 
+        });
+    }
+});
+// api lấy banner cho trang chủ.
+router.get('/banner/all-grouped', async (req, res) => {
+    try {
+        const allBanners = await Banner.findAll({
+            where: { an_hien: 1 },
+            order: [['stt', 'ASC']],
+            attributes: ['id', 'img', 'url', 'vi_tri', 'stt']
+        });
+
+        
+        const banners: MangBanner[] = allBanners.map(
+            b => b.get({ plain: true }) as MangBanner
+        );//plain true lấy object thuần
+		//group banner theo vị trs
+        const groupedData = banners.reduce<Partial<GroupedBanner>>(
+            (acc, banner) => {//nếu ac là rông gán mnag rông rồi push
+                const pos = banner.vi_tri;
+                (acc[pos] ??= []).push(banner);
+                return acc;
+            },
+            {}
+        );
+
+        const finalResult: GroupedBanner = {
+            home_top: groupedData.home_top ?? [],
+            home_middle: groupedData.home_middle ?? [],
+            home_bottom: groupedData.home_bottom ?? [],
+            home_slider: groupedData.home_slider ?? [],
+            popup: groupedData.popup ?? []
+        };
+
+        return res.status(200).json({
+            success: true,
+            data: finalResult
+        });
+
+    } catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy tất cả banner theo nhóm ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+        return res.status(500).json({
+            success: false,
+            thong_bao: 'Lỗi server'
+        });
+    }
+});
+router.get('/PTTT',async(req, res)=>{
+	try {
+		const phuongThucThanhToan = await PTTT.findAll({
+			where: {an_hien: AN_HIEN_VALUE},
+			order: [['id','DESC']],
+			attributes: ['id','ten_pt','code','img','an_hien']
+		});
+		// throw new Error("test");
+		return res.status(200).json({
+			data: phuongThucThanhToan, success: true
+		})
+		
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi lấy danh sách pttt ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy danh sách phương thức thanh  toán"});	
+	}
+})
+//api thong ke cho shop
+router.get('/shop/thong-ke-tong-quan',checkShop, async(req , res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const startOfDay = new Date();
+		startOfDay.setHours(0,0,0,0);//laay luc 0 gio
+		const [doanhThuHomNay, donMoiHomNay, donChoXacNhan, spSapHet] = await Promise.all([
+			DonHang.sum('tong_tien',{
+				where: {
+					id_shop: id_shop,
+					trang_thai_dh: DON_HANG_DA_GIAO_VALUE,
+					trang_thai_thanh_toan: THANH_TOAN_THANH_CONG_VALUE,
+					updatedAt: {[Op.gte]: startOfDay},
+					ngay_hoan_thanh: {[Op.ne]: null}
+				}
+			}),
+			DonHang.count({
+				where: {
+					id_shop: id_shop,
+					createdAt: {[Op.gte]: startOfDay}
+				}
+			}),
+			DonHang.count({
+				where: {
+					id_shop: id_shop,
+					trang_thai_dh: DON_HANG_DA_CHUA_XAC_NHAN
+				}
+			}),
+			SanPham.count({
+				where: {
+					id_user: id_shop,
+					so_luong: {[Op.lt]: 5},
+					an_hien: AN_HIEN_VALUE, khoa: {[Op.ne]: KHOA_VALUE}, is_active: ACTIVATED_VALUE
+				}
+			})
+		]);
+		return res.status(200).json({
+			data: {
+				doanh_thu_hom_nay: doanhThuHomNay || 0,
+				don_moi_hom_nay: donMoiHomNay,
+				don_can_xu_ly: donChoXacNhan,
+				sp_can_nhap: spSapHet
+			},
+			 success: true
+		});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi thống kê tổng quan của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({ success: false, thong_bao: "Lỗi thống kê tổng quan" });
+	}
+})
+router.get<{},{},{},ThongKeDoanhThu>('/shop/thong-ke-doanh-thu-chart', checkShop,async (req, res) => {
+	try {
+		const type = req.query.type || 'month'; // Mặc định là xem theo tháng
+		const year = Number(req.query.year) || new Date().getFullYear(); // Mặc định năm nay
+		const month = Number(req.query.month) || new Date().getMonth() + 1; // Mặc định tháng này
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id
+		
+		const whereCondition: any = {
+			trang_thai_thanh_toan: THANH_TOAN_THANH_CONG_VALUE, // Tiền đã về
+			trang_thai_dh:  DON_HANG_DA_GIAO_VALUE,      // Đơn không hủy
+			ngay_hoan_thanh: {[Op.ne]: null},
+			id_shop: id_shop
+		};
+
+		let attributes: any[] = [];
+		let groupBy: any;
+		let labels: number[] = []; // Dùng để tạo trục hoành 
+
+		// 2. Xử lý Logic theo Type
+		if (type === 'month') {//nếu là mouth thì chỉ lấy yaer
+			// --- LOGIC: THỐNG KÊ 12 THÁNG TRONG NĂM ---
+			
+			// Filter theo năm
+			whereCondition[Op.and] = [
+				sequelize.where(fn('YEAR', col('createdAt')), year)
+			];
+
+			// Lấy THÁNG và TỔNG TIỀN
+			attributes = [
+				[fn('MONTH', col('createdAt')), 'label'], // Trả về 1, 2, ..., 12
+				[fn('SUM', col('tong_tien')), 'data']
+			];
+			
+			groupBy = [fn('MONTH', col('createdAt'))];
+
+			// Tạo khung xương cho 12 tháng
+			labels = Array.from({ length: 12 }, (_, i) => i + 1); // [1, 2, ..., 12]
+
+		} else if (type === 'day') {
+			//  THỐNG KÊ CÁC NGÀY TRONG 1 THÁNG ---
+			// nếu làm ngày thì lấy tham số month và year
+			// Filter theo Tháng và Năm
+			whereCondition[Op.and] = [
+				sequelize.where(fn('MONTH', col('createdAt')), month),
+				sequelize.where(fn('YEAR', col('createdAt')), year)
+			];
+
+			// Select: Lấy NGÀY và TỔNG TIỀN
+			attributes = [
+				[fn('DAY', col('createdAt')), 'label'], // Trả về 1, 2, 3...
+				[fn('SUM', col('tong_tien')), 'data']
+			];
+
+			groupBy = [fn('DAY', col('createdAt'))];
+
+			// Tính số ngày trong tháng đó (để xử lý tháng 2 nhuận, tháng 30, 31 ngày)
+			const daysInMonth = new Date(year, month, 0).getDate();
+			labels = Array.from({ length: daysInMonth }, (_, i) => i + 1); // [1, 2, ..., 30/31]
+		}
+
+		// Query Database
+		const results = await DonHang.findAll({
+			attributes: attributes,
+			where: whereCondition,
+			group: groupBy,
+			raw: true // Trả về JSON thuần để dễ map
+		}) as unknown as { label: number, data: string }[];
+
+		// Lấp đầy dữ liệu (Zero-filling) - QUAN TRỌNG
+		// Database chỉ trả về những ngày có đơn. Ta cần map vào danh sách labels đầy đủ.
+		const chartData = labels.map(label => {
+			// Tìm trong kết quả DB xem có ngày/tháng này không
+			const found = results.find(item => item.label === label);
+			return {
+				label: type === 'month' ? `Tháng ${label}` : `${label}/${month}`, // Tên hiển thị
+				value: found ? Number(found.data) : 0 // Nếu không có thì là 0đ
+			};
+		});
+
+		return res.status(200).json({
+			success: true,
+			type: type,
+			year: year,
+			month: type === 'day' ? month : null,
+			chart_data: chartData, // Mảng này ném thẳng vào FE vẽ biểu đồ
+			summary: {
+				total: chartData.reduce((acc, curr) => acc + curr.value, 0) // Tổng doanh thu cả kỳ
+			}
+		});
+
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi thống kê doanh thu chart của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({ thong_bao: "Lỗi thống kê biểu đồ", success: false });
+	}
+});
+router.get<{},{}, {}, ThongKeTop>('/shop/thong-ke/san-pham-ban-chay',checkShop, async(req , res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit): 5;
+		const topSanPham = await SanPham.findAll({
+			where: {
+				id_user: id_shop,
+				an_hien: AN_HIEN_VALUE,
+				is_active: ACTIVATED_VALUE,
+				da_ban: {[Op.gt]: 0}
+			},
+			attributes: ['id','ten_sp','img','gia','slug','da_ban'],
+			order: [['da_ban','DESC']],
+			limit: limit
+		});
+		return res.status(200).json({	
+			data: topSanPham,
+			success: true
+		})
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi  thống kê sản  phẩm bán chạy của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi thông ke top sản phẩm bán chạy nhất", success: false})
+	}
+})
+//thong ke ty le don hang giao thanh cong pie chart
+router.get('/shop/thong-ke/don-hang-trang-thai',checkShop,async(req , res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_shop = userPayload.id
+		const donHangTrangThai = await DonHang.findAll({
+			where: {id_shop: id_shop},
+			attributes: [
+				'trang_thai_dh',
+				[fn('COUNT', col('id')), 'so_luong']
+			],
+			group: ['trang_thai_dh'],
+			raw: true
+		});
+		return res.status(200).json({data: donHangTrangThai, success: true})
+	} catch (error) {
+		const err =error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi  thống kê sản phẩm bán chạy của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi khi  thống kê trạng thái đơn hàng của một shop",success: false})
+	}
+})
+//router hieenj danh sachs cart khi chua dang nhap 
+router.post<{}, {}, getMergeSanPhamInput>('/san-pham-merge',validate(getMergeSanPhamschema),async(req, res)=>{
+	try {
+		const {items} = req.body;
+		if (!items || items.length === 0) {
+            return res.status(200).json({ success: true, data: [] });
+        }
+		
+		const listIdSp = items.map(item => item.id_sp);
+		//lấy list bien  thể bổ null và undifine
+		const listIdBt = items.filter(item => item.id_bt).map(item => item.id_bt);
+		//query  db bằng chỉ tốn 2 query đc hơn 100 sản phẩm
+		const  sanPhams = await SanPham.findAll({
+			where: {id: {[Op.in]: listIdSp},
+				an_hien: AN_HIEN_VALUE, khoa: {[Op.ne]: KHOA_VALUE}, is_active: ACTIVATED_VALUE
+			},
+			include: [{
+				model: User,
+				as: 'shop',
+				attributes: ['id','ten_shop','hinh']
+			}]
+		});
+		let bienThes: any[] = [];
+		if(listIdBt.length > 0){
+			bienThes = await SanPhamBienThe.findAll({
+				where: {id: {[Op.in]: listIdBt},id_sp: { [Op.in]: listIdSp }}
+				,
+			})
+		}
+		const formattedList = items.map(item=>{
+				const sanPhamInfo = sanPhams.find(sp => sp.id === item.id_sp);
+				// nếu 0 tìm thấy sản phẩm thì trả về  null
+				if(!sanPhamInfo) return null;
+				const sanPhamJson = sanPhamInfo.toJSON() as any;
+				
+				let giaGoc = Number(sanPhamInfo.gia);
+				let maxStock = sanPhamInfo.so_luong
+				let bienTheInfo = null;
+				if(item.id_bt){
+					bienTheInfo = bienThes.find(bt => bt.id === item.id_bt);
+					if(bienTheInfo){
+						maxStock = bienTheInfo.so_luong
+						giaGoc = Number(bienTheInfo.gia);
+					}
+				}
+				//sử lý cột giảm giá
+				const phanTramGiam = sanPhamInfo.sale;
+				const giaDaGiam: number = phanTramGiam > 0 ? Math.round(giaGoc * (1 - phanTramGiam/100)) : giaGoc;
+				const finalQty = item.so_luong > maxStock ? maxStock : item.so_luong 
+				
+				return {
+					...item,
+					gia_da_giam: giaDaGiam,
+					id_sp: sanPhamInfo.id,
+					id_bt: bienTheInfo ? bienTheInfo.id : null,
+					ten_sp: sanPhamInfo.ten_sp,
+					slug: sanPhamInfo.slug,
+					ten_bien_the : bienTheInfo ? bienTheInfo.ten_bien_the : null,
+					img: (bienTheInfo && bienTheInfo.img) ? bienTheInfo.img : sanPhamInfo.img,
+					gia_goc: giaGoc,
+					gia_hien_tai: giaDaGiam,
+					gia_tong: giaDaGiam * finalQty,
+					sale: sanPhamInfo.sale,
+					so_luong : finalQty,
+					max_so_luong: maxStock,
+					is_active: normalizeBoolean(sanPhamInfo.an_hien)  === AN_HIEN_VALUE && maxStock > 0 && normalizeBoolean(sanPhamInfo.is_active)  === ACTIVATED_VALUE,
+					shop_info: {
+						id: sanPhamJson.shop.id,
+						ten_shop: sanPhamJson.shop.ten_shop,
+						hinh: sanPhamJson.shop.hinh || null
+					},
+				};
+			}).filter(item => item !== null);
+			const groupCart: any[] = [];
+			const shopMap = new Map<number, any>();
+
+			formattedList.forEach((item) => {
+				const shop = item.shop_info;
+				if (!shop) return; // Skip nếu lỗi data
+
+				// Tách shop_info ra khỏi item data cho gọn
+				const { shop_info, ...itemData } = item;
+
+				if (!shopMap.has(shop.id)) {
+					// Tạo nhóm mới nếu chưa có
+					const newShopEntry = {
+						id_shop: shop.id,
+						ten_shop: shop.ten_shop,
+						hinh_shop: shop.hinh,
+						items: [itemData]
+					};
+					shopMap.set(shop.id, newShopEntry);
+					groupCart.push(newShopEntry);
+				} else {
+					// Push vào nhóm đã có
+					shopMap.get(shop.id).items.push(itemData);
+				}
+        });
+		return res.status(200).json({ success: true, data: groupCart });
+	} catch (error) {
+		const err = error as CustomError;
+        logger.error(`[CRITICAL] Lỗi APi xem danh sách giỏ hàng khi chưa  đăng nhập ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+        return res.status(500).json({ success: false, thong_bao: "Lỗi xử lý danh sách sản phẩm" });
+	}
+})
+//thong bao
+router.get<{},{},{},GetAllThongBao>('/thong-bao', checkAuth,async(req, res)=>{
+	try {
+		const userPayload = req.user as  AuthUser;
+		const  id_user = userPayload.id;
+		const  page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const  limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const loai_tb = req.query.loai_thong_bao as string;
+		const whereCondition : WhereOptions<ThongBao> = {id_user, vai_tro_nhan: VAI_TRO_NHAN.PUBLIC}
+		if(loai_tb){
+			whereCondition.loai_thong_bao = loai_tb
+		}
+		const  offset = (page - 1) * limit;
+		const  {rows, count} = await ThongBao.findAndCountAll({
+			where: whereCondition,
+			limit: limit,
+			offset: offset,
+			order: [['createdAt','DESC']]
+		});
+		const totalPages = Math.ceil(count / limit);
+		const  resData = {
+			result :{
+				data: rows,
+				pagination: {
+					CurrentPage : page,
+					totalItem : count,
+					limit: limit,
+					totalPages: totalPages
+				},
+				success: true
+			}
+		}
+		return res.status(200).json(resData)
+	} catch (error) {
+		const err = error as CustomError;
+
+		logger.error(`[CRITICAL] Lỗi APi  lấy danh sách thông báo người dùng ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy danh sách thông báo", success: false})
+	}
+})
+router.get<{},{},{},GetAllThongBao>('/shop/thong-bao', checkShop,async(req, res)=>{
+	try {
+		const userPayload = req.user as  AuthUser;
+		const  id_user = userPayload.id;
+		const  page = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
+		const  limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const  offset = (page - 1) * limit;
+		const loai_tb = req.query.loai_thong_bao as string;
+		const whereCondition: WhereOptions<ThongBao> = {id_user, vai_tro_nhan: VAI_TRO_NHAN.SHOP};
+		if(loai_tb) whereCondition.loai_thong_bao = loai_tb;
+		const  {rows, count} = await ThongBao.findAndCountAll({
+			where: whereCondition,
+			limit: limit,
+			offset: offset,
+			order: [['createdAt','DESC']]
+		});
+		const totalPages = Math.ceil(count / limit);
+		const  resData = {
+			result :{
+				data: rows,
+				pagination: {
+					CurrentPage : page,
+					totalItem : count,
+					limit: limit,
+					totalPages: totalPages
+				},
+				success: true
+			}
+		}
+		return res.status(200).json(resData)
+	} catch (error) {
+		const err = error as CustomError;
+
+		logger.error(`[CRITICAL] Lỗi APi lấy danh  sách thông báo của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi lấy danh sách thông báo", success: false})
+	}
+})
+
+//th  dùng 2 thiết bị thì vd thằng dt đọc rồi những thông báo vẫn hiện chuawa dọc bên laptop  phải f5 load lại
+router.put<ParamsThongBaoByID>('/thong-bao/:id/da-doc',checkAuth, async(req, res)=>{
+	try {
+		const  {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const thongBao = await ThongBao.findOne({where: {id, id_user: id_user,da_doc: THONG_BAO_SEEN.CHUA_DOC}});
+		if(!thongBao){
+			throw {status: 404, thong_bao: "Không tìm thấy thông báo"};
+		}
+		thongBao.da_doc = THONG_BAO_SEEN.DA_DOC
+		await thongBao.save();
+		
+		try {
+			const io = req.app.get('io');
+			io.to(buildRoom.user(id_user)).emit(SocketRoomName.notificationRead, { id_thong_bao: Number(id) });
+		} catch (socketErr) {
+			const err = socketErr as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn thông báo đã đọc: ${err.message}`, { stack: err.stack });
+		}
+		return res.status(200).json({thong_bao: "Đã đánh dấu đọc cho  thông báo", success: true})
+	} catch (error) {
+		const err = error as  CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ  khi đánh dấu  đã đọc cho thông báo"
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi đọc 1 thông báo ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+		
+	}
+})
+router.put<ParamsThongBaoByID>('/shop/thong-bao/:id/da-doc',checkShop, async(req, res)=>{
+	try {
+		const  {id} = req.params;
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const thongBao = await ThongBao.findOne({where: {id, id_user: id_user, da_doc: THONG_BAO_SEEN.CHUA_DOC}});
+		if(!thongBao){
+			throw {status: 404, thong_bao: "Không tìm thấy thông báo"};
+		}
+		thongBao.da_doc = THONG_BAO_SEEN.DA_DOC
+		await thongBao.save();
+		try {
+			const io = req.app.get('io');
+			io.to(buildRoom.shop(id_user)).emit(SocketRoomName.notificationRead, { id_thong_bao: Number(id) });
+		} catch (socketErr) {
+			const err = socketErr as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn thông báo đã đọc: ${err.message}`, { stack: err.stack });
+		}
+		return res.status(200).json({thong_bao: "Đã đánh dấu đọc cho  thông báo", success: true})
+	} catch (error) {
+		const err = error as  CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ  khi đánh dấu  đã đọc cho thông báo"
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi đọc 1 thông báo của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false})
+		
+	}
+})
+
+router.put<{},{},{},ThongBaoReadAll>('/thong-bao/da-doc-het',checkAuth, async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const loai_tb = req.query.loai_thong_bao  as  string;
+		const id_user = userPayload.id;
+		const whereCondition: WhereOptions<ThongBao> = {id_user, vai_tro_nhan: VAI_TRO_NHAN.PUBLIC, da_doc: THONG_BAO_SEEN.CHUA_DOC};
+		if(loai_tb) whereCondition.loai_thong_bao = loai_tb;
+		await ThongBao.update({
+			da_doc: THONG_BAO_SEEN.DA_DOC
+		},{
+			where: whereCondition
+		})
+		try {
+			const io = req.app.get('io');
+			io.to(buildRoom.user(id_user)).emit(SocketRoomName.notificationRead, { loai_thong_bao: loai_tb || 'ALL' });
+		} catch (socketErr) {
+			const err = socketErr as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn thông báo đã đọc hết : ${err.message}`, { stack: err.stack });
+		}
+		return res.status(200).json({thong_bao: "Đã đọc hết thông báo", success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi đọc hêt thông báo  ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi đọc hết thông báo", success: false});
+	}
+})
+router.put<{},{},{},ThongBaoReadAll>('/shop/thong-bao/da-doc-het',checkShop, async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const loai_tb = req.query.loai_thong_bao  as  string;
+		const id_user = userPayload.id;
+		const whereCondition: WhereOptions<ThongBao> = {id_user, vai_tro_nhan: VAI_TRO_NHAN.SHOP, da_doc: THONG_BAO_SEEN.CHUA_DOC};
+		if(loai_tb) whereCondition.loai_thong_bao = loai_tb;
+		await ThongBao.update({
+			da_doc: THONG_BAO_SEEN.DA_DOC
+		},{
+			where: whereCondition
+		})
+		try {
+			const io = req.app.get('io');
+			io.to(buildRoom.shop(id_user)).emit(SocketRoomName.notificationRead, { loai_thong_bao: loai_tb || 'ALL' });
+		} catch (socketErr) {
+			const err = socketErr as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn thông báo đã đọc hết : ${err.message}`, { stack: err.stack });
+		}
+		return res.status(200).json({thong_bao: "Đã đọc hết thông báo", success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi đọc hêt thông báo của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi đọc hết thông báo", success: false});
+	}
+})
+router.get<{},{},{},ThongBaoReadAll>('/thong-bao/chua-doc/count',checkAuth,async(req , res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const  id_user = userPayload.id;
+		const loai_tb = req.query.loai_thong_bao as  string;
+		const  whereCondition: WhereOptions<ThongBao> = {id_user, da_doc: THONG_BAO_SEEN.CHUA_DOC, vai_tro_nhan: VAI_TRO_NHAN.PUBLIC};
+		if(loai_tb){
+			whereCondition.loai_thong_bao = loai_tb
+			
+		}
+		const notificationUnReadCount = await ThongBao.count({
+			where: whereCondition
+		});
+		return res.status(200).json({data: notificationUnReadCount, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi đếm sô  lượng thông báo chưa đọc ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi khi đếm thông báo chưa đọc", success: false});
+
+	}
+})
+router.get<{},{},{},ThongBaoReadAll>('/shop/thong-bao/chua-doc/count',checkShop,async(req , res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const  id_user = userPayload.id;
+		const loai_tb = req.query.loai_thong_bao as  string;
+		const  whereCondition: WhereOptions<ThongBao> = {id_user, da_doc: THONG_BAO_SEEN.CHUA_DOC, vai_tro_nhan: VAI_TRO_NHAN.SHOP};
+		if(loai_tb){
+			whereCondition.loai_thong_bao = loai_tb
+			
+		}
+		const notificationUnReadCount = await ThongBao.count({
+			where: whereCondition
+		});
+		return res.status(200).json({data: notificationUnReadCount, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi đếm sô  lượng thông báo chưa đọc của shop ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi khi đếm thông báo chưa đọc", success: false});
+
+	}
+})
+router.delete('/thong-bao/xoa-thong-bao',checkAuth, async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		
+		const deleteCount  = await ThongBao.destroy({where: {id_user, vai_tro_nhan: VAI_TRO_NHAN.PUBLIC}});
+		if(deleteCount === 0){
+			return res.status(200).json({
+				success: true,
+				thong_bao: "Không có thông báo nào để xóa"
+			});
+		}
+		try {
+			const io = req.app.get('io');
+			io.to(buildRoom.user(id_user)).emit(SocketRoomName.notificationDelete, {loai_thong_bao: 'ALL'});
+		} catch (socketErr) {
+			const err = socketErr as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi xóa  hết thông báo : ${err.message}`, { stack: err.stack });
+		}
+		return res.status(200).json({thong_bao: "Đã xóa hết thông báo", success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi  xóa hết thông báo ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi xóa hết thông báo", success: false});
+	}
+})
+router.delete('/shop/thong-bao/xoa-thong-bao',checkShop, async(req, res)=>{
+	try {
+		const userPayload = req.user as AuthUser;
+		const id_user = userPayload.id;
+		const deleteCount = await ThongBao.destroy({where: {id_user, vai_tro_nhan: VAI_TRO_NHAN.SHOP}});
+		if(deleteCount === 0){
+			return res.status(200).json({
+				success: true,
+				thong_bao: "Không có thông báo nào để xóa"
+			});
+		}
+		try {
+			const io = req.app.get('io');
+			io.to(buildRoom.shop(id_user)).emit(SocketRoomName.notificationRead, {loai_thong_bao: 'ALL'});
+		} catch (socketErr) {
+			const err = socketErr as CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi api xóa hết thông báo : ${err.message}`, { stack: err.stack });
+		}
+		return res.status(200).json({thong_bao: "Đã xóa hết thông báo", success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi APi  xóa hết thông báo ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		return res.status(500).json({thong_bao: "Lỗi máy chủ khi xóa hết thông báo", success: false});
+	}
+});
+
+//chat
+router.post<{},{},UserChatSInput, {}>('/chat/khoi-tao',checkAuth,validate(UserChatSchema), async(req, res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const  id_nguoi_gui = userPayLoad.id;
+		const vai_tro_nguoi_gui = VAI_TRO_USER.USER;
+		const  {id_nguoi_nhan, vai_tro_nguoi_nhan} = req.body;
+		if(id_nguoi_gui === id_nguoi_nhan) throw {status: 400, thong_bao: "Không thể tự chat với chính  mình"};
+		const  receiver = await User.findByPk(id_nguoi_nhan);
+		if(!receiver){
+			throw {status: 404, thong_bao: "Người nhận không tồn tại"};
+		}
+		if(vai_tro_nguoi_nhan === 'SHOP' && !receiver.is_shop){
+			throw {status: 403, thong_bao: "Lỗi bảo mật: người này không phải là chủ shop"};
+		}
+		if(vai_tro_nguoi_nhan === "ADMIN" && receiver.vai_tro !== ADMIN_ROLE_ID ){
+			throw {status: 403, thong_bao: "Lỗi bảo mật: Người dùng này không phải admin"};
+		}
+		const result = await findOrCreateChatRoom(id_nguoi_gui,vai_tro_nguoi_gui,id_nguoi_nhan,vai_tro_nguoi_nhan);
+		return res.status(200).json({data: result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi tạo cuộc hội thoại";
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi khởi tạo cuộc hội thoại user ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+
+router.post<{},{},ShopChatSInput, {}>('/shop/chat/khoi-tao',checkShop,validate(ShopChatSchema), async(req, res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const id_nguoi_gui = userPayLoad.id;
+		const vai_tro_nguoi_gui = VAI_TRO_USER.SHOP;
+		const {id_nguoi_nhan, vai_tro_nguoi_nhan} = req.body;
+		if(id_nguoi_gui === id_nguoi_nhan) throw {status: 400, thong_bao:"Không thể tự chat với chính  mình"};
+		const receiver = await User.findByPk(id_nguoi_nhan);
+		if(!receiver) throw {status: 404, thong_bao: "Người nhận không tồn tại"};
+		if(vai_tro_nguoi_nhan === 'ADMIN' && receiver.vai_tro === ADMIN_ROLE_ID) throw {status: 403, thong_bao: "Lỗi bảo mật: Người dùng này không phải admin"};
+		const result = await findOrCreateChatRoom(id_nguoi_gui, vai_tro_nguoi_gui, id_nguoi_nhan, vai_tro_nguoi_nhan);
+		return res.status(200).json({data: result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const thong_bao = err.thong_bao || "Lỗi máy chu khi tạo cuộc hội thoại";
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi khởi tạo cuộc hội thoại admin ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+
+
+//api lấy thông tin chat  khi fe nhận đc id_hoi_thoai nó sẽ dùng api này mở giao diện lên để lấy lịch sử chat và có before khi fe lấy lần đâu ko có beforwe nhưng khi kéo lên sẽ lấy before truyền vao để query cho nhẹ
+//Cursor-based Pagination
+router.get<GetAllChatInput, {},{}, GetAllChatQuery>('/chat/tin-nhan/:id_hoi_thoai',checkAuth,validate(GetAllChatSchema), async(req , res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const id_user = userPayLoad.id;
+		const {id_hoi_thoai} = req.params;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 50;
+		const cursor = Number(req.query.cursor) ? Number(req.query.cursor) : null;
+		//check quyền trong tn co quyền vô ko
+		const isMember = await ThanhVienHoiThoai.findOne({
+			where: {id_hoi_thoai: id_hoi_thoai, id_user: id_user}
+		});
+		if(!isMember) throw {status: 403, thong_bao: "Không có quyền truy cập vô cuộc hội thoại!"};
+		const whereCondition: WhereOptions<TinNhan> = {id_hoi_thoai: id_hoi_thoai};
+		//nếu fe truyền id lên mình chir lấy tin có id  nhỏ hơn id đó
+		if(cursor){
+			whereCondition.id = {[Op.lt]: cursor};
+		}
+		const danhSachTinNhan = await TinNhan.findAll({
+			where: whereCondition,
+			order: [['id','DESC']],
+			limit: limit,
+			attributes: ['id','id_user','vai_tro','noi_dung','da_doc','is_recalled','createdAt']
+		})
+		//dảo lại ccho fe in thừ trên  xuống  dứi
+		const result = danhSachTinNhan.reverse();
+
+		const next_cursor = result.length > 0 ? result[0]!.id : null;
+		return res.status(200).json({data: result,
+			pagination: {
+				has_more: danhSachTinNhan.length === limit,//lấy đủ 50 thì vẫn còn tiếp
+				next_cursor: next_cursor
+			}
+		});
+	} catch (error) {
+		const err = error as CustomError;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ máy khi  lấy lịch sử tin nhắn";
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi APi khi  lấy lịch sử tin nhắn ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+
+// router.get<GetAllChatInput, {},{}, GetAllChatQuery>('/shop/chat/tin-nhan/:id_hoi_thoai',checkShop,validate(GetAllChatSchema), async(req , res)=>{
+// 	try {
+// 		const userPayLoad = req.user as AuthUser;
+// 		const id_user = userPayLoad.id;
+// 		const {id_hoi_thoai} = req.params;
+// 		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 50;
+// 		const cursor = Number(req.query.cursor) ? Number(req.query.cursor) : null;
+// 		//check quyền trong tn co quyền vô ko
+// 		const isMember = await ThanhVienHoiThoai.findOne({
+// 			where: {id_hoi_thoai: id_hoi_thoai, id_user: id_user}
+// 		});
+// 		if(!isMember) throw {status: 403, thong_bao: "Không có quyền truy cập vô cuộc hội thoại!"};
+// 		const whereCondition: WhereOptions<TinNhan> = {id_hoi_thoai: id_hoi_thoai};
+// 		//nếu fe truyền id lên mình chir lấy tin có id  nhỏ hơn id đó
+// 		if(cursor){
+// 			whereCondition.id = {[Op.lt]: cursor};
+// 		}
+// 		const danhSachTinNhan = await TinNhan.findAll({
+// 			where: whereCondition,
+// 			order: [['id','DESC']],
+// 			limit: limit,
+// 			attributes: ['id','id_user','vai_tro','noi_dung','da_doc','is_recalled','createdAt']
+// 		})
+// 		//dảo lại ccho fe in thừ trên  xuống  dứi
+// 		const result = danhSachTinNhan.reverse();
+
+// 		const next_cursor = result.length > 0 ? result[0]!.id : null;
+// 		//vd lúc đầu có 1200 lấy ra 50 cái id lớn nhất rồi lấy dảo ngược lấy cái đầu trong mảng là cái cũ nhất túc là 1150 là chỉ lấy nhung id mới nhắt giới hạn trong 1150
+// 		return res.status(200).json({
+// 			data: result,
+// 			pagination: {
+// 				has_more: danhSachTinNhan.length === limit,//lấy đủ 50 thì vẫn còn tiếp
+// 				next_cursor: next_cursor
+// 			}
+// 		});
+// 	} catch (error) {
+// 		const err = error as CustomError;
+// 		const thong_bao = err.thong_bao || "Lỗi máy chủ máy khi  lấy lịch sử tin nhắn";
+// 		const status = err.status || 500;
+// 		if(status >= 500){
+// 			logger.error(`[CRITICAL] Lỗi APi khi  lấy lịch sử tin nhắn ${err.message || 'Unknown error'}`, {stack: err.stack || 'No stack trace'});
+// 		}
+// 		return res.status(status).json({thong_bao, success: false});
+// 	}
+// })
+//
+//api gửi tin nhắn dùng chung
+router.post<{}, {}, SendChatInput, {}>('/chat/tin-nhan',checkAuth,validate(SendChatSchema), async(req, res)=>{
+	const t = await sequelize.transaction();
+	let isCommit = false
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const id_user = userPayLoad.id;
+		
+		const {id_hoi_thoai, noi_dung} = req.body;
+		const isMember = await ThanhVienHoiThoai.findOne({
+			where: {id_hoi_thoai: id_hoi_thoai, id_user: id_user},
+			transaction: t
+		});
+		if(!isMember) throw {status: 403, thong_bao: "Bạn không có quyền truy cập vào cuộc hội thoại"};
+		const vai_tro_gui = isMember.vai_tro;
+		const newMessager = await TinNhan.create({
+			id_hoi_thoai: id_hoi_thoai,
+			id_user: id_user,
+			vai_tro: vai_tro_gui,
+			noi_dung: noi_dung,
+			da_doc: 0,
+			is_recalled: false
+		},{transaction: t});
+		await CuocHoiThoai.update({
+			tin_nhan_cuoi: noi_dung,
+			thoi_gian_cap_nhat: new Date()
+		},{
+			where: {id: id_hoi_thoai},
+			transaction:t
+		});
+		await t.commit();
+		isCommit = true
+		try {
+			const io = req.app.get('io');
+			io.to(ChatRoom(id_hoi_thoai)).emit(SocketRoomName.receivemessage, newMessager.toJSON());
+		} catch (socketError) {
+			const err = socketError as  CustomError;
+			logger.error(`[SOCKET WARNING] Lỗi bắn tin nhắn real-time: ${err.message}`);
+		}
+		return res.status(200).json({
+			data: newMessager,
+			success: true
+		})
+	} catch (error) {
+		const err = error as CustomError;
+		if(!isCommit){
+			await t.rollback();
+		}
+		
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi gửi tin nhắn";
+        const status = err.status || 500;
+        
+        if (status >= 500) {
+            logger.error(`[CRITICAL] Lỗi API gửi tin nhắn chat ${err.message || 'Unknown error'}`, { stack: err.stack || 'No stack trace' });
+        }
+        return res.status(status).json({ thong_bao, success: false });
+	}
+})
+
+//lấy danh sách chat 1-1 admin user và shop dùng chung
+router.get<{},{},{}, GetAllConVerStation>('/chat/inbox',checkAuth, async(req, res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const id_user = userPayLoad.id;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const cursor_time = req.query.cursor_time ? new Date(req.query.cursor_time) : null;
+		const cursor_id = req.query.cursor_id ? Number(req.query.cursor_id) : null;
+		if(cursor_time &&  isNaN(cursor_time.getTime())){
+			throw {status: 400, thong_bao: "giá trị cursor time không hợp lệ"};
+		}
+		//lấy tất cả phòng mình tham gia
+		const myRooms = await ThanhVienHoiThoai.findAll({
+			where: {id_user, an_hien: Boolean_Type.true},
+			attributes: ['id_hoi_thoai']
+		});
+		const roomIds = myRooms.map(room => room.id_hoi_thoai);
+		if(roomIds.length === 0){
+			return res.status(200).json({
+				data: [],
+				pagination:{
+					has_more:false,
+					next_cursor_time:null,
+					next_cursor_id:null
+				}, 
+				success: true});
+		}
+
+		const  whereCondition: WhereOptions<CuocHoiThoai> = {id: {[Op.in]: roomIds}, loai_hoi_thoai: LOAI_HOI_THOAI.ONE}
+		if(cursor_id !== null && cursor_time !== null){
+			(whereCondition as any)[Op.and] = [
+				{
+					[Op.or]: [
+						{//thỏa 1 trong 2 cái
+							thoi_gian_cap_nhat: {[Op.lt]: cursor_time},//th 1 chắn chắn cũ hon
+
+						},
+						{
+							thoi_gian_cap_nhat: cursor_time,
+							id: { [Op.lt]: cursor_id }
+						}
+					]
+				}
+				
+			];//dung and đẻ bọc or
+		}
+
+		//không để an_hien vô  đây vì nếu mình lấy  danh sách ra thang kia nó ghét  thì mình sẽ không thấy tin nhắn của nó
+		const listInbox = await CuocHoiThoai.findAll({
+			where: whereCondition,
+			limit: limit,
+			order: [
+				['thoi_gian_cap_nhat','DESC'],
+				['id','DESC']	
+			],
+			include: [{
+				model: ThanhVienHoiThoai,
+				as: 'thanh_vien',
+				where: {id_user: {[Op.ne]: id_user}},
+				attributes: ['id_user','vai_tro'],
+				include: [{
+					model: User,
+					as: 'nguoi_nhan',
+					attributes: ['id','ho_ten','hinh','ten_shop','tai_khoan']
+				}]
+			}]
+		});
+		const result = listInbox.map(room => {
+			const dataRoom = room.toJSON() as unknown as ListInbox1To1;
+			const doi_phuong = dataRoom.thanh_vien[0];
+			return {
+				id_hoi_thoai: dataRoom.id,
+				tin_nhan_cuoi: dataRoom.tin_nhan_cuoi,
+				thoi_gian_cap_nhat: dataRoom.thoi_gian_cap_nhat,
+				doi_phuong: {
+					id: doi_phuong.nguoi_nhan.id,
+					ho_ten: doi_phuong.vai_tro === VAI_TRO_USER.SHOP ? doi_phuong.nguoi_nhan.ten_shop : doi_phuong.nguoi_nhan.ho_ten || doi_phuong.nguoi_nhan.tai_khoan,
+					avatar: doi_phuong.nguoi_nhan.hinh || null,
+					vai_tro_trong_phong : doi_phuong.vai_tro,
+				}
+			}
+		});
+
+		const lastItem = listInbox.length > 0 ? listInbox[listInbox.length - 1] : null
+		return res.status(200).json({
+			data: result,
+			pagination: {
+				has_more: listInbox.length === limit,
+				next_cursor_time: lastItem ? lastItem.thoi_gian_cap_nhat : null,
+				next_cursor_id: lastItem ? lastItem.id : null
+			},
+			success: true
+		})
+	} catch (error) {
+		const err = error as CustomError;
+        const thong_bao = err.thong_bao || "Lỗi máy chủ khi lấy danh sách hội thoại";
+        const status = err.status || 500;
+        
+        if (status >= 500) {
+            logger.error(`[CRITICAL] Lỗi API lấy Inbox ${err.message || 'Unknown error'}`, { stack: err.stack || 'No stack trace' });
+        }
+        return res.status(status).json({ thong_bao, success: false });
+	}
+})
+
+
+router.put<{},{},ReadAllChatInput, {}>('/chat/da-xem',checkAuth, validate(ReadAllChatSchema),async(req , res)=>{
+	try {
+		const userPayLoad = req.user  as AuthUser;
+		const id_user = userPayLoad.id;
+		const { id_hoi_thoai } = req.body;
+		const isMember = await ThanhVienHoiThoai.findOne({
+			where: {id_hoi_thoai: id_hoi_thoai, id_user: id_user}
+		});
+		if(!isMember){
+			throw {status: 403, thong_bao: "Bạn  không có quyền trong cuộc hội thoại này"};
+		}
+		const [affetedCount] = await TinNhan.update({
+			da_doc: Is_Read_MESSAGE.TRUE
+		},{
+			where : {
+				id_hoi_thoai: id_hoi_thoai,
+				id_user: {[Op.ne]: id_user},
+				da_doc: Is_Read_MESSAGE.FALSE
+			}
+
+		});
+		if(affetedCount > 0){
+			try {
+				const io = req.app.get('io');
+				io.to(ChatRoom(id_hoi_thoai)).emit(SocketRoomName.readMessage,{
+					id_hoi_thoai: id_hoi_thoai,
+					id_user: id_user
+				});
+			} catch (Socketerror) {
+				const err = Socketerror as CustomError;
+				logger.error(`[SOCKET] Lỗi bắn sự kiện đã xem: ${err.message}`);
+			}
+		}
+		return res.status(200).json({
+			so_luong_da_doc: affetedCount,
+			success: true
+		})
+	} catch (error) {
+		const err = error as  CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi  máy chủ khi xem tin nhắn";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi API đánh dấu đã dọc ${err.message || 'Unknown error'}`, { stack: err.stack || 'No stack trace' });
+		}
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+router.put<{},{},RecallMessageInput, {}>('/chat/thu-hoi', checkAuth, validate(RecallMessageSchema),async(req, res)=>{
+	const t = await sequelize.transaction();
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const id_user = userPayLoad.id;
+		const {id_tin_nhan} = req.body;
+		const Message = await TinNhan.findByPk(id_tin_nhan, {transaction: t});
+		if(!Message){
+			throw {status: 404, thong_bao: "Không tìm thấy tin nhắn!"};
+		}
+		if(Message.id_user !== id_user){
+			throw {status: 403, thong_bao: "Lỗi bảo mật: Bạn không thể thu hợp do ko phải là chủ của tin nhắn"};
+		}
+		if(Message.is_recalled){
+			throw {status: 400, thong_bao: "Tin  nhắn này đã được thu hồi rồi!"};
+		}
+		const timeSendMessage = new Date(Message.createdAt).getTime();
+		const CurrentTime = new Date().getTime();
+		const timeInterval = CurrentTime - timeSendMessage;
+		const maxTimeLimit = 5 * 60 * 1000;
+		if(timeInterval > maxTimeLimit){
+			throw {status: 400, thong_bao: "Đã quá 5 phút, không thể thu hồi tin nhắn này nữa!"};
+		}
+		await Message.update({
+			is_recalled: Boolean_Type.true,
+			noi_dung: LINE_MESSAGE.RECALL,
+		},{transaction: t});
+		const lastMessage = await  TinNhan.findOne({
+			where: {id_hoi_thoai: Message.id_hoi_thoai},
+			order: [['id','DESC']],
+			attributes: ['id'],
+			transaction: t
+		});
+		if(lastMessage && lastMessage.id === id_tin_nhan){
+			await CuocHoiThoai.update({
+				tin_nhan_cuoi: LINE_MESSAGE.RECALL
+				//không udpdate lại thời gian đẻ listbox ko bị nhảy
+			},{
+				where: {id: Message.id_hoi_thoai},
+				transaction: t
+			});
+			
+		}
+		await t.commit();
+
+		try {
+			const io = req.app.get('io');
+			io.to(ChatRoom(Message.id_hoi_thoai)).emit(SocketRoomName.recallMessage,{
+				id_tin_nhan: id_tin_nhan,
+				id_hoi_thoai: Message.id_hoi_thoai,
+				noi_dung_moi: LINE_MESSAGE.RECALL
+			})
+		} catch (socketError) {
+			const err = socketError as CustomError;
+			logger.error(`[SOCKET] Lỗi bắn sự kiện thu hồi: ${err.message}`);
+		}
+		return res.status(200).json({thong_bao: "Thu hồi tin nhắn thành công", success: true});
+	} catch (error) {
+		await t.rollback();
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi thu hồi thông báo";
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi API thu hồi tin nhắn ${err.message || 'Unknown error'}`, { stack: err.stack || 'No stack trace' });
+		}
+		return res.status(status).json({thong_bao, success: false})
+	}
+})
+//ẩn  hiện cuộc hội thoại
+router.put<{},{},IsHideCoverstationInput, {}>('/chat/an-hoi-thoai',checkAuth, validate(IsHideCoverstationSchema), async(req, res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		
+		const id_user = userPayLoad.id;
+		
+		const {id_thanh_vien} = req.body;
+		const currentUser = await User.findByPk(id_user);
+		if(!currentUser || !currentUser.message_protection_code){
+			throw {status: 403, thong_bao: "Vui lòng thiết  lập mã pin trước khi  ẩn trò chuyện", need_setup_pin: true};
+		}
+		const [affectCount] = await ThanhVienHoiThoai.update({
+			an_hien: Boolean_Type.false
+		},{
+			where: {id: id_thanh_vien, id_user: id_user}
+		});
+		
+		if(affectCount  === 0){
+			throw {status: 404, thong_bao: "Không tìm thấy bạn trong hội thoại này"};
+		}
+		return res.status(200).json({thong_bao: "Đã luu vào kho tin nhắn ẩn", success: true});
+	} catch (error) {
+		const  err= error as CustomError;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi ẩn hội thoại";
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi API ẩn tin nhắn ${err.message || 'Unknown error'}`, { stack: err.stack || 'No stack trace' });
+		}
+		return res.status(status).json({thong_bao,success: false});
+	}
+})
+router.put<{},{},IsHideCoverstationInput, {}>('/chat/bo-an-hoi-thoai',checkAuth, validate(IsHideCoverstationSchema), async(req, res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const id_user = userPayLoad.id;
+		const {id_thanh_vien} = req.body;
+		const [affectCount] = await ThanhVienHoiThoai.update({
+			an_hien: Boolean_Type.true
+		},{
+			where: {id: id_thanh_vien, id_user: id_user}
+		});
+		if(affectCount  === 0){
+			throw {status: 404, thong_bao: "Không tìm thấy bạn trong hội thoại này"};
+		}
+		return res.status(200).json({thong_bao: "Đã bỏ khoỉ kho tin nhắn ẩn", success: true});
+	} catch (error) {
+		const  err= error as CustomError;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi bỏ ẩn hội thoại";
+		const status = err.status || 500;
+		if(status >= 500){
+			logger.error(`[CRITICAL] Lỗi API bỏ ẩn tin nhắn ${err.message || 'Unknown error'}`, { stack: err.stack || 'No stack trace' });
+		}
+		return res.status(status).json({thong_bao,success: false});
+	}
+})
+//danhs sach choat box bi an
+router.post<{},{},ReadHiddenConversationInput, GetAllConVerStation>('/chat/inbox-an',checkAuth, validate(ReadHiddenConversationSchema),async(req, res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const id_user = userPayLoad.id;
+		const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 10;
+		const cursor_time = req.query.cursor_time ? new Date(req.query.cursor_time) : null;
+		const cursor_id = req.query.cursor_id ? Number(req.query.cursor_id) : null;
+		const {ma_pin} = req.body;
+		if(cursor_time &&  isNaN(cursor_time.getTime())){
+			throw {status: 400, thong_bao: "giá trị cursor time không hợp lệ"};
+		}
+		const currentUser = await User.findByPk(id_user,
+		{attributes: ['message_protection_code']}
+		);
+		if(!currentUser || !currentUser.message_protection_code){
+			throw {status: 403, thong_bao: "Bạn chưa thiết lạp mã pin bảo vệ", need_setup_pin: true};
+		}
+		const isMatch = await bcrypt.compare(ma_pin, currentUser.message_protection_code);
+		if(!isMatch){
+			throw {status: 403, thong_bao: "Mã bảo vệ không chính xác!"};
+		}
+		//lấy tất cả phòng mình tham gia
+		const myRooms = await ThanhVienHoiThoai.findAll({
+			where: {id_user, an_hien: Boolean_Type.false},
+			attributes: ['id_hoi_thoai']
+		});
+		const roomIds = myRooms.map(room => room.id_hoi_thoai);
+		if(roomIds.length === 0){
+			return res.status(200).json({
+				data: [],
+				pagination:{
+					has_more:false,
+					next_cursor_time:null,
+					next_cursor_id:null
+				}, 
+				success: true});
+		}
+
+		const  whereCondition: WhereOptions<CuocHoiThoai> = {id: {[Op.in]: roomIds}, loai_hoi_thoai: LOAI_HOI_THOAI.ONE}
+		if(cursor_id !== null && cursor_time !== null){
+			(whereCondition as any)[Op.and] = [
+				{
+					[Op.or]: [
+						{//thỏa 1 trong 2 cái
+							thoi_gian_cap_nhat: {[Op.lt]: cursor_time},//th 1 chắn chắn cũ hon
+
+						},
+						{
+							thoi_gian_cap_nhat: cursor_time,
+							id: { [Op.lt]: cursor_id }
+						}
+					]
+				}
+				
+			];//dung and đẻ bọc or
+		}
+
+		//không để an_hien vô  đây vì nếu mình lấy  danh sách ra thang kia nó ghét  thì mình sẽ không thấy tin nhắn của nó
+		const listInbox = await CuocHoiThoai.findAll({
+			where: whereCondition,
+			limit: limit,
+			order: [
+				['thoi_gian_cap_nhat','DESC'],
+				['id','DESC']	
+			],
+			include: [{
+				model: ThanhVienHoiThoai,
+				as: 'thanh_vien',
+				where: {id_user: {[Op.ne]: id_user}},
+				attributes: ['id_user','vai_tro'],
+				include: [{
+					model: User,
+					as: 'nguoi_nhan',
+					attributes: ['id','ho_ten','hinh','ten_shop','tai_khoan']
+				}]
+			}]
+		});
+		const result = listInbox.map(room => {
+			const dataRoom = room.toJSON() as unknown as ListInbox1To1;
+			const doi_phuong = dataRoom.thanh_vien[0];
+			return {
+				id_hoi_thoai: dataRoom.id,
+				tin_nhan_cuoi: dataRoom.tin_nhan_cuoi,
+				thoi_gian_cap_nhat: dataRoom.thoi_gian_cap_nhat,
+				doi_phuong: {
+					id: doi_phuong.nguoi_nhan.id,
+					ho_ten: doi_phuong.vai_tro === VAI_TRO_USER.SHOP ? doi_phuong.nguoi_nhan.ten_shop : doi_phuong.nguoi_nhan.ho_ten || doi_phuong.nguoi_nhan.tai_khoan,
+					avatar: doi_phuong.nguoi_nhan.hinh || null,
+					vai_tro_trong_phong : doi_phuong.vai_tro,
+				}
+			}
+		});
+
+		const lastItem = listInbox.length > 0 ? listInbox[listInbox.length - 1] : null
+		return res.status(200).json({
+			data: result,
+			pagination: {
+				has_more: listInbox.length === limit,
+				next_cursor_time: lastItem ? lastItem.thoi_gian_cap_nhat : null,
+				next_cursor_id: lastItem ? lastItem.id : null
+			},
+			success: true
+		})
+	} catch (error) {
+		const err = error as CustomError;
+        const thong_bao = err.thong_bao || "Lỗi máy chủ khi lấy danh sách hội thoại";
+        const status = err.status || 500;
+        
+        if (status >= 500) {
+            logger.error(`[CRITICAL] Lỗi API lấy Inbox ẩn ${err.message || 'Unknown error'}`, { stack: err.stack || 'No stack trace' });
+        }
+        return res.status(status).json({ thong_bao, success: false });
+	}
+})
+
+router.get<{},{},{},TimKiemGoiYHoiThoai>('/chat/tim-kiem',checkAuth,async(req, res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const  id_user = userPayLoad.id;
+		let  limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 6;
+		if(limit > 6){
+			limit = 6
+		}
+		const keywork = req.query.keyword ? req.query.keyword.trim(): '';
+		if(!keywork){
+			return res.status(200).json({data: [], success: true});
+		}
+		console.log(keywork);
+		const  myRoom = await ThanhVienHoiThoai.findAll(
+			{
+				where: {id_user: id_user, an_hien: Boolean_Type.true},
+				attributes: ['id_hoi_thoai']
+			}
+		);
+		const  roomId = myRoom.map(r => r.id_hoi_thoai);
+		if(roomId.length === 0){
+			return res.status(200).json({data: [], success: true});
+		}
+
+		//khi dungf include dung where thi nho them substring de tranhs loi
+		const listIntbox = await CuocHoiThoai.findAll({
+			where: {
+				id: {[Op.in]: roomId},
+				loai_hoi_thoai : LOAI_HOI_THOAI.ONE
+			},
+			limit: limit,
+			subQuery: false,
+			order: [['thoi_gian_cap_nhat', 'DESC']],
+			include: [{
+				model: ThanhVienHoiThoai,
+				as: 'thanh_vien',
+				where: {id_user: {[Op.ne]: id_user}},
+				required: true,
+				include: [{
+					model: User,
+					as: 'nguoi_nhan',
+					attributes: ['id','ho_ten','email','ten_shop','tai_khoan'],
+					where: {[Op.or]: [
+						{ho_ten: {[Op.like]: `%${keywork}%`}},
+						{ten_shop: {[Op.like]: `%${keywork}%`}},
+						{ email: { [Op.like]: `%${keywork}%` } },
+					]},
+					required: true
+				}]
+			}]
+		});
+		
+		const result = listIntbox.map(room=>{
+			const dataRoom = room.toJSON() as unknown as ListInbox1To1;
+			const receiver = dataRoom.thanh_vien[0]
+			return {
+				id_hoi_thoai: dataRoom.id,
+				tin_nhan_cuoi: dataRoom.tin_nhan_cuoi,
+				thoi_gian_cap_nhat: dataRoom.thoi_gian_cap_nhat,
+				nguoi_nhan: {
+					id: receiver.nguoi_nhan.id,
+					ho_ten: receiver.vai_tro === VAI_TRO_USER.SHOP ? receiver.nguoi_nhan.ten_shop : receiver.nguoi_nhan.ho_ten || receiver.nguoi_nhan.tai_khoan,
+					avatar: receiver.nguoi_nhan.hinh || null,
+					vai_tro_trong_phong: receiver.vai_tro
+				}
+			}
+		});
+		return  res.status(200).json({
+			data: result,
+			success: true,
+		});
+	} catch (error) {
+		const err = error as CustomError;
+		logger.error(`[CRITICAL] Lỗi API Tìm kiếm Chat ${err.message || 'Unknown error'}`, { stack: err.stack || 'No stack trace' });
+        
+		return res.status(500).json({thong_bao: "Lỗi máy chu khi tìm kiếm cuộc hội thoại", success: false});
+	}
+})
+router.get<{},{},{},TimKiemGoiYTinNhan>('/chat/tim-kiem-tin-nhan',checkAuth,async(req, res)=>{
+	try {
+		const userPayLoad = req.user as AuthUser;
+		const id_user = userPayLoad.id;
+		const  id_hoi_thoai = Number(req.query.id_hoi_thoai);
+		const keyword = req.query.keyword ? req.query.keyword.trim() : '';
+		let limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : 20;
+		if(limit > 20){
+			limit = 20
+		}
+		if(!id_hoi_thoai || isNaN(id_hoi_thoai)){
+			throw {status: 400, thong_bao: "Id hội thoại không hợp lệ"};
+		}
+		if(!keyword){
+			return res.status(200).json({data: [], success: true});
+		}
+		const isMember = await ThanhVienHoiThoai.findOne({
+			where: {id_user: id_user, id_hoi_thoai: id_hoi_thoai}
+		});
+		if(!isMember){
+			throw {status: 403, thong_bao: "Lỗi bảo mật: Bạn không có quyền ở cuộc hội thoại này"};
+		}
+		const listMessage = await TinNhan.findAll({
+			where: {
+				id_hoi_thoai: id_hoi_thoai,
+				noi_dung: {[Op.like]: `%${keyword}%`},
+				is_recalled: false,
+			},
+			limit: limit,
+			order: [['createdAt','DESC']],
+			include: [{
+				model: User,
+				as: 'nguoi_gui',
+				attributes: ['id','ho_ten','hinh','ten_shop','tai_khoan','vai_tro']
+			}]
+		});
+		const result = listMessage.map(msg=>{
+			const dataMsg = msg.toJSON() as  unknown as ChatMessage;
+			return {
+				id_tin_nhan: dataMsg.id,
+				noi_dung: dataMsg.noi_dung,
+				thoi_gian_gui: dataMsg.createdAt,
+				nguoi_gui: {
+					id: dataMsg.nguoi_gui.id,
+					ho_ten: dataMsg.nguoi_gui.vai_tro === VAI_TRO_USER.SHOP ? dataMsg.nguoi_gui.ten_shop : dataMsg.nguoi_gui.ho_ten || dataMsg.nguoi_gui.tai_khoan,
+					hinh: dataMsg.nguoi_gui.hinh || null
+				}
+
+			}
+		})
+		return res.status(200).json({data: result, success: true});
+	} catch (error) {
+		const err = error as CustomError;
+		const status = err.status || 500;
+		const thong_bao = err.thong_bao || "Lỗi máy chủ khi tìm kiếm tin nhắn";
+		if (status >= 500) {
+            logger.error(`[CRITICAL] Lỗi API Tìm kiếm Tin nhắn ${err.message}`, { stack: err.stack });
+        }
+		return res.status(status).json({thong_bao, success: false});
+	}
+})
+export default router;
+
