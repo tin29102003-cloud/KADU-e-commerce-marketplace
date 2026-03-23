@@ -4,15 +4,20 @@ import BtnPrimary from "@/app/components/user/button/BtnPrimary";
 import BtnSecondary from "@/app/components/user/button/BtnSecondary";
 import CartCheckoutItem from "@/app/components/user/CartCheckoutItem";
 import ErrorBlock from "@/app/components/user/ErrorBlock";
+import MessageBlock from "@/app/components/user/MessageBlock";
 import PromoCodeItem from "@/app/components/user/PromoCodeItem";
+import VoucherPayItem from "@/app/components/user/VoucherPay";
 import payServices from "@/app/services/payServices";
 import { TypePromoCode } from "@/app/types/promoCode";
+import { useSearchParams } from "next/navigation";
 import {
+  ApiError,
   CheckoutResponse,
   TypeAddressItem,
   TypeMethodPayItem,
 } from "@/app/types/type";
 import { formatMoney } from "@/app/utils/helper";
+import axios from "axios";
 import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -22,23 +27,28 @@ import { CiDiscount1, CiLocationOn, CiShop, CiChat1 } from "react-icons/ci";
 import { LiaShippingFastSolid } from "react-icons/lia";
 import { MdPayment } from "react-icons/md";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
+const BASE_URL_PAYMENT = process.env.NEXT_PUBLIC_PAYMENT;
 
 export default function SectionPay({
   dataAddress,
   voucherList,
   listMethodPay,
 }: {
-  dataAddress: TypeAddressItem[];
+  dataAddress: TypeAddressItem;
   voucherList: TypePromoCode[];
   listMethodPay: TypeMethodPayItem[];
 }) {
+  const router = useRouter();
   const [dataPay, setDataPay] =
     useState<{ id_sp: string; so_luong: number; id_bt: number }[]>();
-
   const [defaultDataPay, setDeffaultDataPay] = useState<CheckoutResponse>();
-  const [openPopupVoucher, setOpenPopupVoucher] = useState<boolean>(true);
+  const [openPopupVoucher, setOpenPopupVoucher] = useState<boolean>(false);
   const [notePay, setNotePay] = useState<string>("");
   const [idMethodPay, setIdMethodPay] = useState<number>();
+  const [giam_gia_voucher, setGiam_gia_voucher] = useState<number>(0);
+  const [tong_tien, setTong_tien] = useState<number | undefined>(0);
+  const [id_km, setId_km] = useState<number>(0);
 
   useEffect(() => {
     const dataPayStr = sessionStorage.getItem("dataPay");
@@ -49,6 +59,7 @@ export default function SectionPay({
       try {
         const res = await payServices.getAllProductPay({ items: dataPay });
         if (!res.success) return;
+        setTong_tien(res.data.data.tom_tat_don_hang.grandTotal);
         setDeffaultDataPay(res.data);
       } catch (err) {
         console.log(err);
@@ -57,11 +68,12 @@ export default function SectionPay({
     })();
   }, []);
 
-  const handleSubmitPay = async () => {
-    const idKm = sessionStorage.getItem("voucher_id");
+  useEffect(() => {
+    setTong_tien((prev) => Number(prev) - giam_gia_voucher);
+  }, [giam_gia_voucher]);
 
+  const handleSubmitPay = async () => {
     if (!dataPay) return;
-    if (!idKm) return;
     const dataPost: {
       items: { id_sp: string; so_luong: number; id_bt: number }[];
       id_km: number;
@@ -70,30 +82,60 @@ export default function SectionPay({
       ghi_chu: string;
     } = {
       items: [...dataPay],
-      id_km: Number(idKm),
-      id_dia_chi: dataAddress[0].id,
+      id_km: Number(id_km),
+      id_dia_chi: dataAddress.id!,
+      //  dataAddress[0].id
       id_pttt: Number(idMethodPay),
       ghi_chu: notePay,
     };
+    // console.log(dataPost);
+    // try {
+    //   console.log(BASE_URL_PAYMENT);
+    //   const res = await axios.post(BASE_URL_PAYMENT!, dataPost, {
+    //     withCredentials: true,
+    //   });
+    //   console.log(res);
+    //   // if (!res.success) return;
+    //   // toast.success("Đặt hàng thành công.");
+    //   // const idDh = res.data.data.list_don_hang[0];
+    //   //   try {
+    //   //     console.log(idDh);
+    //   //     const res = await payServices.payment(Number(idDh));
+    //   //     if (!res.success) return;
+    //   //     console.log(res);
+    //   //   } catch (err) {
+    //   //     console.log(err);
+    //   //   }
+    // } catch (err) {
+    //   console.log(err);
+    // }
 
     try {
-      console.log(dataPost);
       const res = await payServices.newDonHang(dataPost);
       if (!res.success) return;
-      toast.success("Đặt hàng thành công.");
       const idDh = res.data.data.list_don_hang[0];
-      //   try {
-      //     console.log(idDh);
-      //     const res = await payServices.payment(Number(idDh));
-      //     if (!res.success) return;
-      //     console.log(res);
-      //   } catch (err) {
-      //     console.log(err);
-      //   }
+      if (idMethodPay === 1) {
+        toast.success("Đặt hàng thành công.");
+        router.push(`/checkout/success/?id_dh=${idDh}`);
+        return;
+      }
+      try {
+        const res = await payServices.payment(Number(idDh));
+        if (!res.success) return;
+        if (res.data.url) router.push(res.data.url);
+      } catch (err) {
+        console.log(err);
+      }
     } catch (err) {
-      console.log(err);
+      const error = err as ApiError;
+      if (error.status === 400) {
+        toast.error(error.message);
+      } else {
+        toast.error("Lỗi không xác định!");
+      }
     }
   };
+  console.log(voucherList);
   return (
     <section className="section--pay section-py">
       <div className="container">
@@ -111,16 +153,16 @@ export default function SectionPay({
                 {/*address name and phone */}
                 <div>
                   <span className="address__name text-base font-medium">
-                    {dataAddress[0].ho_ten}
+                    {dataAddress.ho_ten}
                   </span>
                   <span className="address__phone ml-3 text-base text-textGrayDark">
-                    {dataAddress[0].dien_thoai}
+                    {dataAddress.dien_thoai}
                   </span>
                 </div>
                 {/*address content  */}
                 <div className="flex-y-center gap-x-4 mt-1">
                   <span className="text-base text-textGrayDark">
-                    {dataAddress[0].dia_chi}
+                    {dataAddress.dia_chi}
                   </span>
                   <div className="address--action flex-y-center gap-x-2">
                     <BtnSecondary
@@ -141,8 +183,8 @@ export default function SectionPay({
             <div className="col-6">
               {defaultDataPay && (
                 <ul className="checkout--list flex flex-col gap-y-5">
-                  {defaultDataPay.data.shops.map((shop) => (
-                    <li className="checkout--item">
+                  {defaultDataPay.data.shops.map((shop, i) => (
+                    <li key={i} className="checkout--item">
                       <div className="cart--seller flex-y-center gap-x-2 py-3 border-b border-bd-primary">
                         <div className="flex-y-center gap-x-1">
                           <CiShop className="text-2xl" />
@@ -246,11 +288,11 @@ export default function SectionPay({
                           Phương thức thanh toán
                         </span>
                       </div>
-                      <div className="">
+                      {/* <div className="">
                         <span className="text-sm">
                           Thanh toán khi nhận hàng
                         </span>
-                      </div>
+                      </div> */}
                     </div>
                     {/*  */}
                     <div className="list--methodPay flex flex-col gap-y-3 mt-3 pb-2 border-b border-bd-primary">
@@ -264,6 +306,7 @@ export default function SectionPay({
                                 wrapperClassName="inline-block w-full h-full ratio-box"
                                 className=" ratio-img"
                                 alt=""
+                                connectHost={true}
                               />
                             </div>
                             <div className="block--select flex-y-center gap-x-3">
@@ -317,12 +360,13 @@ export default function SectionPay({
                         Giảm giá Voucher
                       </span>
                       <span className="text-base ">
-                        {defaultDataPay
+                        {formatMoney(giam_gia_voucher)}
+                        {/* {defaultDataPay
                           ? formatMoney(
                               defaultDataPay.data.tom_tat_don_hang
                                 .total_giam_gia_voucher
                             )
-                          : formatMoney(0)}
+                          : formatMoney(0)} */}
                       </span>
                     </li>
                     <li className="item flex-between-center">
@@ -343,11 +387,7 @@ export default function SectionPay({
                         Tổng thanh toán
                       </span>
                       <span className="title-24 text-accentColor font-medium">
-                        {defaultDataPay
-                          ? formatMoney(
-                              defaultDataPay.data.tom_tat_don_hang.grandTotal
-                            )
-                          : formatMoney(0)}
+                        {tong_tien ? formatMoney(tong_tien) : formatMoney(0)}
                       </span>
                     </li>
                   </ul>
@@ -363,8 +403,7 @@ export default function SectionPay({
           </div>
         </div>
       </div>
-
-      <div
+      {/* <div
         className={clsx(
           "popup--voucherFixed fixed inset-0 z-[100] flex-center bg-black/30 transition-all-300-ease",
           openPopupVoucher && "opacity-0 invisible"
@@ -385,7 +424,40 @@ export default function SectionPay({
             )}
           </div>
         </div>
+      </div> */}
+      {/* news popup  */}
+      <div
+        className={clsx(
+          "voucher--popup fixed inset-0 bg-black/30 flex items-center justify-center z-50 transition-all-300-ease",
+          !openPopupVoucher ? "opacity-0 invisible" : ""
+        )}
+        onClick={() => setOpenPopupVoucher((prev) => !prev)}
+      >
+        <div
+          className="bg-white rounded-lg w-[90%] max-h-[95vh]  max-w-lg p-6 shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="title text-lg">Chọn voucher</div>
+          <div className="voucher--list mt-5 flex flex-col gap-y-3">
+            {voucherList === null && <ErrorBlock />}
+            {voucherList !== null && voucherList.length === 0 && (
+              <MessageBlock content="Hiện không có voucher" />
+            )}
+            {voucherList !== null &&
+              voucherList.length > 0 &&
+              voucherList.map((vc) => (
+                <VoucherPayItem
+                  code={vc}
+                  setGiam_gia_voucher={setGiam_gia_voucher}
+                  setId_km={setId_km}
+                />
+              ))}
+          </div>
+        </div>
       </div>
+      ;
     </section>
   );
+
+  // overflow-y-auto style-scroll-1
 }

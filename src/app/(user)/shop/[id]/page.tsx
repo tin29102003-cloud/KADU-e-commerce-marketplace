@@ -14,6 +14,8 @@ import Link from "next/link";
 import { CiUser, CiShop } from "react-icons/ci";
 
 import SectionAllProduct from "./sectionAllProduct";
+import shopServicesServer from "@/app/services/shopServices-server";
+import { TypeUserInfo } from "@/app/types/user";
 
 export default async function Shop({
   params,
@@ -26,9 +28,10 @@ export default async function Shop({
 
   const { page } = await searchParams;
   const result = await Promise.allSettled([
-    productServicesServer.getProductShop(Number(id), Number(page)),
+    productServicesServer.getProductShop(Number(id), Number(page), 20),
+    shopServicesServer.getInfoShop(),
   ]);
-  const [productDeffaultRes] = result;
+  const [productDeffaultRes, infoShopRes] = result;
   const dataProductDeffault =
     productDeffaultRes.status === "fulfilled"
       ? productDeffaultRes.value.data.result
@@ -46,6 +49,10 @@ export default async function Shop({
   const productOutOfStockList: TypeProduct[] | null = productDeffault
     ? productDeffault.filter((item) => Number(item.so_luong) <= 0)
     : null;
+  const infoShop: TypeUserInfo =
+    infoShopRes.status === "fulfilled" ? infoShopRes.value.data.data : null;
+  //
+
   // console.log(productOutOfStockList);
   return (
     <>
@@ -72,7 +79,8 @@ export default async function Shop({
                       >
                         <div className="box--img w-full h-full rounded-full bg-neutral-150 overflow-hidden">
                           <ImgLazy
-                            src="/images/product/product-2.png"
+                            src={infoShop.hinh}
+                            connectHost={true}
                             alt="Seller logo"
                             className="img-full"
                           />
@@ -81,7 +89,7 @@ export default async function Shop({
                     </div>
                     <div className="seller--info">
                       <h4 className="seller--info__name font-medium text-white line-clamp-2">
-                        TORANO Official Store
+                        {infoShop.ho_ten}
                       </h4>
                       <div className="seller--status flex-y-center gap-x-1 mt-1 before:content-[''] before:block before:w-[5px] before:h-[5px] before:bg-[#16A34A] before:rounded-full">
                         <span className="text-sm text-white">Online</span>
@@ -89,7 +97,7 @@ export default async function Shop({
                       <div className="seller--action flex-y-center gap-x-2 mt-3">
                         <BtnPrimary
                           content="Theo dõi"
-                          className="p-[8px_14px] text-sm"
+                          className="!p-[8px_14px] text-sm"
                         >
                           <CiUser className="w-5 h-5 stroke-white stroke-[0.9px]" />
                         </BtnPrimary>
@@ -103,7 +111,7 @@ export default async function Shop({
                     </div>
                   </div>
                   {/*  */}
-                  <div className="info--seller grow pl-base">
+                  {/* <div className="info--seller grow pl-base">
                     <ul className="infoSeller--list grid grid-cols-3 gap-base">
                       {Array.from({ length: 6 }).map((item) => (
                         <li className="item flex-y-center gap-x-1">
@@ -121,7 +129,7 @@ export default async function Shop({
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
@@ -151,7 +159,7 @@ export default async function Shop({
           <div className="container">
             <div className="productOutOfStock">
               <TitleSection title="Sản phẩm hết hàng" />
-              <ul className="productOutOfStock--list grid-col4 mt-base">
+              <ul className="productOutOfStock--list grid-col5 mt-base">
                 {productOutOfStockList.map((p) => (
                   <Product product={p} />
                 ))}

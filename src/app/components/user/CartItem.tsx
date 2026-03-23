@@ -54,6 +54,7 @@ export default function CartItem({
       const res = await cartServices.updateCart(Number(id), Number(q));
       if (!res.success) return;
       setGia_tong(cartItem.gia_hien_tai * q);
+      console.log(res);
       setListCartItem((prev) =>
         prev
           ? prev.map((shop) => ({
@@ -90,6 +91,7 @@ export default function CartItem({
       setSelectedIds((prev) => prev.filter((i) => i !== id));
     }
   };
+  console.log(cartItem);
   return (
     <li
       className="cart--prd row py-3 border-b border-bd-primary last:border-none"
@@ -113,9 +115,10 @@ export default function CartItem({
                 className="block w-20 h-20 rounded-lg overflow-hidden "
               >
                 <ImgLazy
-                  src="./images/product/product-2.png"
+                  src={cartItem.img}
                   alt="sản phẩm 1"
                   className="img-full"
+                  connectHost={true}
                 />
               </Link>
             </div>
@@ -129,9 +132,9 @@ export default function CartItem({
         <div className="cart--classify col-span-2 flex-center flex-col text-[13px] font-medium text-textGrayDark ">
           <div className="cart--classify__title flex-y-center gap-x-[6px] select-none cursor-pointer">
             Phân loại hàng
-            <IoMdArrowDropdown className="text-base" />
+            {/* <IoMdArrowDropdown className="text-base" /> */}
           </div>
-          <div className="cart--classify__content">Màu đỏ, Size xs</div>
+          <div className="cart--classify__content">{cartItem.ten_bien_the}</div>
         </div>
       </div>
       <div className="right col-7 ">

@@ -3,32 +3,113 @@ import ImgLazy from "@/app/components/shared/Imglazy";
 import BtnPrimary from "@/app/components/user/button/BtnPrimary";
 import BtnSecondary from "@/app/components/user/button/BtnSecondary";
 import { TypeUserInfo } from "@/app/types/user";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Fancybox, Carousel } from "@fancyapps/ui/dist/fancybox/";
 import "@fancyapps/ui/dist/fancybox/fancybox.css";
 import useFancybox from "@/app/hook/useFancybox";
+import { validatorPhone, validatorString } from "@/app/utils/form";
+import { toast } from "react-toastify";
+import infoUserServices from "@/app/services/infoUserServices";
+import clsx from "clsx";
+import { ApiError } from "@/app/types/type";
 
 export default function UpdateInfoUser({
   infoUser,
 }: {
   infoUser: TypeUserInfo;
 }) {
+  console.log(infoUser.hinh);
   const [fancyboxRef] = useFancybox({});
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     infoUser ? infoUser.hinh : null
   );
-  const [useName, setUserName] = useState<string | null>(
-    infoUser ? infoUser.ho_ten : null
-  );
-
+  const [useName, setUserName] = useState<string>(infoUser.ho_ten);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [phone, setPhone] = useState<string | number>(infoUser.dien_thoai);
+  const [errForm, setErrForm] = useState({ userName: "", phone: "", img: "" });
+  const BASE_URL_SERVER = process.env.NEXT_PUBLIC_HOST_BACKEND;
   const handleSetImg = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const previewURL = URL.createObjectURL(file);
-    setAvatarPreview(previewURL);
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
-  const handleValidatorPhone = (val: string) => {};
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+  const handleValidatorUserName = (val: string) => {
+    setUserName(val);
+    validatorString(val, (errMsg) => {
+      setErrForm((prev) => ({ ...prev, userName: errMsg }));
+    });
+  };
+
+  const handleValidatorPhone = (val: string) => {
+    setPhone(val);
+    validatorPhone(val, (errMsg) => {
+      setErrForm((prev) => ({ ...prev, phone: errMsg }));
+    });
+  };
+
+  const handleSubmit = async () => {
+    console.log(avatarFile);
+    const isUserNameChanged = useName !== infoUser.ho_ten;
+    const isPhoneChanged = phone !== infoUser.dien_thoai;
+    const isAvatarChanged = !!avatarFile;
+    if (!isUserNameChanged && !isPhoneChanged && !isAvatarChanged) {
+      toast.warning("Không có sự thay đổi.");
+      return;
+    }
+
+    if (isUserNameChanged && errForm.userName) return;
+    if (isPhoneChanged && errForm.phone) return;
+    const formData = new FormData();
+    // if (avatarFile) {
+    formData.append("hinh_user", avatarFile ? avatarFile : "");
+    // }
+    // if (isUserNameChanged) {
+    formData.append("ho_ten", useName);
+    // }
+    // if (isPhoneChanged) {
+    formData.append("dien_thoai", String(phone));
+    // }
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+    // console.log(avatarFile);
+    // console.log(useName);
+    // console.log(phone);
+    try {
+      const res = await infoUserServices.updateInfoUser(formData);
+      if (!res.success) return;
+      toast.success("Cập nhật thông tin thành công.");
+      console.log(res);
+      // const getInfoUser = JSON.parse(
+      //   localStorage.getItem("infoUser") ?? "null"
+      // );
+
+      // const changeData = {
+      //   ...getInfoUser,
+      //   ho_ten: useName,
+      //   hinh: !avatarFile ? BASE_URL_SERVER! + avatarPreview : avatarPreview!,
+      // };
+      // localStorage.setItem("infoUser", JSON.stringify(changeData));
+    } catch (err) {
+      console.log(err);
+      const error = err as ApiError;
+      if (error.status === 400) {
+        toast.error(error.message);
+      } else {
+        toast.error("Lỗi không xác định");
+      }
+    }
+  };
+
   return (
     <div className="user--info bg-white p-6 rounded-md shadow-[1px_1px_5px_rgba(0,0,0,0.15)]">
       {/* Header */}
@@ -56,10 +137,18 @@ export default function UpdateInfoUser({
               <label className="w-32 text-sm text-gray-500 text-right">
                 Tên
               </label>
-              <input
-                defaultValue={infoUser ? infoUser.ho_ten : "???"}
-                className="flex-1 border px-3 py-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500"
-              />
+              <div className="block--inp flex-1">
+                <input
+                  defaultValue={infoUser ? infoUser.ho_ten : "???"}
+                  className="w-full border px-3 py-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                  onChange={(e) => handleValidatorUserName(e.target.value)}
+                />
+                <span
+                  className={clsx("err--form", !errForm.userName && "hidden")}
+                >
+                  {errForm.userName}
+                </span>
+              </div>
             </div>
             {/* <div className="flex-y-center gap-x-5">
                       <label className="w-32 text-sm text-gray-500 text-right">
@@ -74,21 +163,24 @@ export default function UpdateInfoUser({
               <label className="w-32 text-sm text-gray-500 text-right">
                 Số điện thoại
               </label>
-              <div className="block--inp flex gap-x-2 flex-1">
+              <div className="block--inp flex-1">
                 <input
                   type="text"
-                  className="flex-1 border px-3 py-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full border px-3 py-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500"
                   defaultValue={infoUser ? infoUser.dien_thoai : "???"}
                   onChange={(e) => handleValidatorPhone(e.target.value)}
                 />
+                <span className={clsx("err--form", !errForm.phone && "hidden")}>
+                  {errForm.phone}
+                </span>
                 {/* <span className="mr-3 text-sm">
                         
                       </span> */}
-                {infoUser && !infoUser.dien_thoai && (
+                {/* {infoUser && !infoUser.dien_thoai && (
                   <button className="text-blue-500 text-sm hover:underline">
                     Cập nhật
                   </button>
-                )}
+                )} */}
               </div>
             </div>
 
@@ -111,7 +203,6 @@ export default function UpdateInfoUser({
                         </label>
                       </div>
                     </div> */}
-
             {/* <div className="flex-y-center gap-x-5">
                       <label className="w-32 text-sm text-gray-500 text-right">
                         Ngày sinh
@@ -124,7 +215,7 @@ export default function UpdateInfoUser({
           </div>
           <div className="wrap--btnSubmit flex gap-x-5 mt-7">
             <div className="w-32"></div>
-            <BtnPrimary content="Lưu" />
+            <BtnPrimary content="Lưu" onClick={handleSubmit} />
           </div>
         </div>
 
@@ -133,7 +224,7 @@ export default function UpdateInfoUser({
           <div ref={fancyboxRef} className="avatar">
             <a
               href={
-                avatarPreview ? avatarPreview : "/images/avatar-default.png"
+                !avatarFile ? BASE_URL_SERVER! + avatarPreview : avatarPreview!
               }
               data-fancybox
               className="avatar--fancybox inline-block w-24 h-24 rounded-full overflow-hidden border border-bd-primary"
@@ -146,6 +237,7 @@ export default function UpdateInfoUser({
                 className="img-full"
                 wrapperClassName="inline-block w-full h-full"
                 data-fancybox
+                connectHost={!avatarFile}
               />
             </a>
           </div>

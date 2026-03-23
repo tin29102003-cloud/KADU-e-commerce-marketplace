@@ -24,6 +24,7 @@ import { validatorEmailAndPhone, validatorPasswword } from "@/app/utils/form";
 
 //type
 import { ApiError } from "@/app/types/type";
+import { useFilter } from "@/app/hook/useFilter";
 
 export default function Login() {
   const router = useRouter();
@@ -68,7 +69,6 @@ export default function Login() {
           tai_khoan: email,
           mat_khau: pass,
         });
-
         if (res.status === 200 && res.success) {
           const data = res.data.user;
           toast.success("Đăng nhập thành công!");
@@ -79,10 +79,11 @@ export default function Login() {
               tai_khoan: data.tai_khoan,
               vai_tro: data.vai_tro,
               email: data.email,
+              hinh: data.hinh,
             })
           );
           setTimeout(() => {
-            router.push("/");
+            router.push("/?is_login=true");
           }, 1000);
         }
       } catch (err) {
@@ -167,7 +168,10 @@ export default function Login() {
                       <span className="text-[#A8A8A8]">
                         Bạn mới biết đến DATN?{" "}
                       </span>
-                      <Link href="#!" className="text-accentColor font-medium">
+                      <Link
+                        href="/auth/register"
+                        className="text-accentColor font-medium"
+                      >
                         Đăng ký
                       </Link>
                     </div>

@@ -338,6 +338,24 @@
   @apply text-sm font-medium text-center text-accentColor;
 }
 
+footer {
+  clip-path: ellipse(160% 100% at 50% 100%);
+}
+
+@layer components {
+  .style-inp-1 {
+    @apply w-full border px-3 py-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500;
+  }
+  .style-scroll-1::-webkit-scrollbar {
+    @apply w-1;
+  }
+  .style-scroll-1::-webkit-scrollbar-thumb {
+    @apply bg-accentColor rounded-full;
+  }
+  .style-scroll-1::-webkit-scrollbar-track {
+    @apply bg-neutral-100;
+  }
+}
 .star--test {
   @apply w-[1px] h-[1px] rounded-full absolute z-10 rotate-[135deg];
   background: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgb(255, 255, 255));
@@ -423,6 +441,16 @@
 
 .section--allCategories .allCategories .categoriesFilter--list > .item:not(:first-child) {
   @apply pt-6 mt-6 border-t border-neutral-100;
+}
+
+.section--user .order .order--nav > ul > li > a {
+  @apply transition-all-300-ease;
+}
+.section--user .order .order--nav > ul > li > a:hover {
+  @apply border-accentColor text-accentColor;
+}
+.section--user .order .order--nav > ul > li.active > a {
+  @apply border-accentColor text-accentColor;
 }
 
 .btn {

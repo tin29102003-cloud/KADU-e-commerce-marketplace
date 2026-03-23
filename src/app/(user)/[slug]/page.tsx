@@ -9,7 +9,7 @@ import { LiaShippingFastSolid } from "react-icons/lia";
 import { CiUser, CiShop } from "react-icons/ci";
 
 // type
-import type { TypeProduct } from "@/app/types/type";
+import type { ProductDetail, TypeProduct } from "@/app/types/type";
 
 // component
 import Breadcrumb from "@/app/components/user/Breadcrumb";
@@ -38,6 +38,7 @@ import MessageBlock from "@/app/components/user/MessageBlock";
 import voucherServcesServer from "@/app/services/voucherServices-server";
 import { TypePromoCode } from "@/app/types/promoCode";
 import TitleAside from "@/app/components/user/TitleAside";
+import RenderStar from "@/app/components/user/RenderStar";
 
 export default async function DetailProduct({
   params,
@@ -64,7 +65,7 @@ export default async function DetailProduct({
       ? voucherListRes.value.data.data
       : null;
   //detail product
-  const productDetail: TypeProduct = detailProductDefault
+  const productDetail: ProductDetail = detailProductDefault
     ? detailProductDefault.san_pham
     : {};
   // product related
@@ -78,7 +79,7 @@ export default async function DetailProduct({
   const commentList: TypeComment[] | null = commentListRes.success
     ? commentListRes.data.result.data
     : null;
-
+  console.log(productDetail);
   return (
     <>
       {/* info seller */}
@@ -89,12 +90,17 @@ export default async function DetailProduct({
             <div className="seller--card relative flex-y-center gap-x-3 pr-5 after:content-[''] after:block after:absolute after:right-0 after:top-1/2 after:-translate-y-1/2 after:h-[90%] after:border-r-[1.2px] after:border-neutral-150">
               <div className="seller--logo">
                 <Link
-                  href="#!"
+                  href={`/shop/${productDetail.shop.id}`}
                   className="block w-[80px] h-[80px] rounded-full border border-neutral-300 p-1"
                 >
                   <div className="box--img w-full h-full rounded-full bg-neutral-150 overflow-hidden">
                     <ImgLazy
-                      src="./images/product/product-2.png"
+                      src={
+                        productDetail.shop.hinh !== null
+                          ? productDetail.shop.hinh
+                          : "/images/avatar-shop-default.jpg"
+                      }
+                      connectHost={productDetail.shop.hinh !== null}
                       alt="Seller logo"
                       className="img-full"
                     />
@@ -103,22 +109,32 @@ export default async function DetailProduct({
               </div>
               <div className="seller--info">
                 <h4 className="seller--info__name font-medium line-clamp-2">
-                  TORANO Official Store
+                  {productDetail.shop.ten_shop}
                 </h4>
                 <div className="seller--status flex-y-center gap-x-1 mt-1 before:content-[''] before:block before:w-[5px] before:h-[5px] before:bg-[#16A34A] before:rounded-full">
                   <span className="text-sm text-[#16A34A]">Online</span>
                 </div>
                 <div className="seller--action flex-y-center gap-x-2 mt-3">
-                  <BtnPrimary className="p-[8px_14px] text-sm">
-                    <CiUser className="w-5 h-5 stroke-white stroke-[0.9px]" />
-                  </BtnPrimary>
-                  <BtnSecondary className="p-[8px_14px] text-sm">
-                    <CiShop className="w-5 h-5 stroke-accentColor stroke-[0.9px]" />
-                  </BtnSecondary>
+                  <Link
+                    href={`/shop/${productDetail.shop.id}`}
+                    className="btn btn--primary flex items-center gap-x-2 !p-[8px_14px] !text-sm"
+                  >
+                    <CiShop className="w-5 h-5 stroke-white stroke-[0.9px]" />
+                    Xem shop
+                  </Link>
+                  {/* <BtnPrimary className="p-[8px_14px] text-sm">
+                    <CiShop className="w-5 h-5 stroke-white stroke-[0.9px]" />
+                  </BtnPrimary> */}
+                  {/* <BtnSecondary
+                    className="p-[8px_14px] text-sm"
+                    content="Xem shop"
+                  >
+                    
+                  </BtnSecondary> */}
                 </div>
               </div>
             </div>
-            <ul className="seller--stats flex-grow grid grid-cols-3">
+            {/* <ul className="seller--stats flex-grow grid grid-cols-3">
               <li className="seller--stats__item relative text-sm grid grid-rows-2 gap-y-5 after:content-[''] after:block after:absolute after:right-0 after:top-1/2 after:-translate-y-1/2 after:h-[75%] after:border-r-[1.2px] after:border-neutral-150 px-6 last:pr-0 first:pl-5">
                 <div className="stats--row1 flex-between-center gap-x-1">
                   <span className="title text-neutral-500">Đánh giá</span>
@@ -161,7 +177,7 @@ export default async function DetailProduct({
                   </span>
                 </div>
               </li>
-            </ul>
+            </ul> */}
             {/* CiUser CiShop */}
           </div>
         </div>
@@ -257,12 +273,6 @@ export default async function DetailProduct({
               </section>
 
               {/* leien qan đến thg shop */}
-              {produceRelatedList === null && <ErrorBlock />}
-              {produceRelatedList !== null &&
-                produceRelatedList.length === 0 && (
-                  <MessageBlock content="Hiện không có sản phẩm liên quan." />
-                )}
-
               <section className="section--productRelatedShop section-py">
                 <TitleSection title="Sản phẩm khác của Shop" />
                 {produceRelatedList === null && <ErrorBlock />}
@@ -283,7 +293,7 @@ export default async function DetailProduct({
 
               {/* có thể mày sẻ thích */}
               <section className="section--productYouMightLike section-py hidden">
-                <TitleSection title="Có thể mày cũng thích" />
+                <TitleSection title="Có thể bạn cũng thích" />
                 <ul className="list-productYouMightLike mt-base grid grid-col4">
                   {/* {productRelatedShop.map((prd: any) => (
                     <Product product={prd} />
@@ -309,47 +319,6 @@ export default async function DetailProduct({
           </div>
         </div>
       </section>
-
-      <div className="detail--actionFixed fixed bottom-2 left-0 z-10 w-full">
-        <div className="container">
-          <div className="row justify-center">
-            <div className="col-8">
-              <div className="flex-between-center p-[12px_16px] bg-white shadow-[0_0_5px_1.5px_rgba(0,0,0,0.15)] rounded-lg">
-                <div className="actionFixed--thumbName flex-y-center gap-x-2">
-                  <div className="actionFixed--thumbName__thumb shrink-0 w-14 h-14 rounded-[4px] overflow-hidden">
-                    <ImgLazy
-                      src="./images/product/product-2.png"
-                      alt="đây là hình test nè "
-                      className="img-full"
-                    />
-                  </div>
-                  <span className="actionFixed--thumbName__name text-sm font-medium line-clamp-2">
-                    {productDetail.ten_sp}
-                  </span>
-                </div>
-                <div className="actionFixed--meta flex-y-center gap-x-3">
-                  <div className="actionFixed--meta__price flex flex-col items-end">
-                    <span className="text-lg text-accentColor font-semibold">
-                      119.000₫
-                    </span>
-                    <span className="text-sm line-through text-price-old">
-                      199.000₫
-                    </span>
-                  </div>
-                  <BtnPrimary
-                    content="Mua ngay"
-                    className="p-[6px_12px] font-medium text-sm whitespace-nowrap"
-                  />
-                  <BtnSecondary
-                    content="Thêm vào giỏ"
-                    className="p-[6px_12px] font-medium text-sm whitespace-nowrap"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </>
   );
 }

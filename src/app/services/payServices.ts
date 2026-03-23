@@ -13,9 +13,13 @@ const payServices = {
     ghi_chu: string;
   }) => fetchApi("/site/tao-don-hang", "POST", data),
   payment: (id_dh: number) =>
-    fetchApi(`${BASE_URL_PAYMENT}/api/site/created-payment-link`, "POST", {
+    fetchApi(`/site/created-payment-link`, "POST", {
       id_dh,
     }),
+  checkStatusPay: (id_dh: number) =>
+    fetchApi(`/site/thanh-toan/check-status/${id_dh}`),
+  cancelPay: (id_dh: number) =>
+    fetchApi(`/site/thanh-toan/huy-giao-dich/${id_dh}`, "PUT"),
 };
 
 export default payServices;

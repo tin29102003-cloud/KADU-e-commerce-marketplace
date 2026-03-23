@@ -42,3 +42,12 @@ export const formatDateVN = (
     new Date(dateStr)
   );
 };
+
+export const getStatusOrder = (status: number) => {
+  if (status === 0) return "Chờ xác nhận";
+  if (status === 1) return "Đang chuẩn bị hàng";
+  if (status === 2) return "Đang giao";
+  if (status === 3) return "Giao hàng thành công";
+  if (status === 4) return "Đã hủy";
+  return "Không xác định";
+};

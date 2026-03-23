@@ -1,0 +1,26 @@
+@mixin flexCenter() {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// clip text theo số dòng
+@mixin clipTextOrderLine($line) {
+  display: -webkit-box;
+  -webkit-line-clamp: $line;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// tạo 1 box giữ chổ với khoảng padding cần tạo
+@mixin aspect-ratio-pseudo($pseudo: after, $percentPd) {
+  &::#{$pseudo} {
+    content: "";
+    display: block;
+    width: 100%;
+    padding-top: $percentPd;
+    // chèn thêm nếu cần
+    @content;
+  }
+}

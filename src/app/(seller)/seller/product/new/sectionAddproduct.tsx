@@ -9,9 +9,12 @@ import useFancybox from "@/app/hook/useFancybox";
 import { IoIosClose } from "react-icons/io";
 import { validatorPrice, validatorString } from "@/app/utils/form";
 import clsx from "clsx";
-import { TypeCategory } from "@/app/types/type";
+import { ApiError, TypeCategory } from "@/app/types/type";
 import SelectClient from "@/app/components/user/SelectClient";
 import BtnSecondary from "@/app/components/user/button/BtnSecondary";
+import productServices from "@/app/services/productServices";
+import { toast } from "react-toastify";
+import { formatMoney } from "@/app/utils/helper";
 
 export default function SectionAddProduct({
   categoriesSelect,
@@ -26,6 +29,7 @@ export default function SectionAddProduct({
   const [fancyboxRef] = useFancybox({});
   // data post
   const [filesImg, setFilesImg] = useState<File[]>([]);
+  const [hinh_bien_the, setHinh_bien_the] = useState<File[]>([]);
   const [nameProduct, setNameProduct] = useState<string>("");
   const [price, setPrice] = useState<string>("");
   const [priceSale, setPriceSale] = useState<string>("");
@@ -37,6 +41,8 @@ export default function SectionAddProduct({
   const [dvctn, setDvctn] = useState<string>("");
   const [statusPrd, setStatusPrd] = useState<string | undefined>("1");
   const [desc, setDesc] = useState<string>("");
+  const [previewPriceSale, setPreviewPriceSale] = useState<number>(0);
+  const [code, setCode] = useState<string>("");
   type AttributeItem = {
     id: number;
     value?: string;
@@ -46,15 +52,29 @@ export default function SectionAddProduct({
   };
 
   const [attributes, setAttributes] = useState<AttributeItem[]>([]);
-  console.log(attributes);
+  // console.log(attributes);
   const [variants, setVariants] = useState<
     {
       id: number;
       name: string;
       code: string;
       price: string;
-      err: { name: string; code: string; price: string };
-      success: { name: boolean; code: boolean; price: boolean };
+      quantity: string;
+      hinh_bien_the: File | undefined;
+      err: {
+        name: string;
+        code: string;
+        price: string;
+        quantity: string;
+        hinh_bien_the: string;
+      };
+      success: {
+        name: boolean;
+        code: boolean;
+        price: boolean;
+        quantity: boolean;
+        hinh_bien_the: boolean;
+      };
     }[]
   >([]);
   const [isSuccess, setIsSuccess] = useState({
@@ -69,6 +89,7 @@ export default function SectionAddProduct({
     trademark: false,
     statusPrd: false,
     attribute: false,
+    code: false,
   });
   const [arrErr, setArrErr] = useState({
     nameProduct: "",
@@ -82,6 +103,7 @@ export default function SectionAddProduct({
     trademark: "",
     statusPrd: "",
     attribute: "",
+    code: "",
   });
   //   set img
   const handleSetImgProduct = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,9 +122,18 @@ export default function SectionAddProduct({
     const isValid = validatorString(
       val,
       (errMsg) => setArrErr((prev) => ({ ...prev, nameProduct: errMsg })),
-      { maxLength: 250 }
+      { maxLength: 250, minLength: 5 }
     );
     setIsSuccess((prev) => ({ ...prev, nameProduct: isValid }));
+  };
+  const handleCode = (val: string) => {
+    setCode(val);
+    // const isValid = validatorString(
+    //   val,
+    //   (errMsg) => setArrErr((prev) => ({ ...prev, code: errMsg })),
+    //   { maxLength: 50 }
+    // );
+    // setIsSuccess((prev) => ({ ...prev, code: isValid }));
   };
 
   const handlePrice = (val: string) => {
@@ -114,11 +145,41 @@ export default function SectionAddProduct({
     setIsSuccess((prev) => ({ ...prev, price: isValid }));
   };
 
+  // preview price sale
+  useEffect(() => {
+    if (!price.trim()) return;
+    if (!priceSale.trim()) {
+      setPreviewPriceSale(0);
+      return;
+    }
+    const sale = Number(priceSale);
+    if (sale >= 100 || sale <= 0) return;
+    setPreviewPriceSale(Number(Number(price) * (1 - sale / 100)));
+    // sale hợp lệ (1–100)
+  }, [priceSale, price]);
+
   const handlePriceSale = (val: string) => {
     setPriceSale(val);
-    const isValid = validatorPrice(val, (errMsg: string) => {
-      setArrErr((prev) => ({ ...prev, priceSale: errMsg }));
-    });
+    let isValid = true;
+    if (val.trim() && Number(val) >= 100) {
+      setArrErr((prev) => ({
+        ...prev,
+        priceSale: "Giá Sale không được lớn hơn hoặc bằng 100%.",
+      }));
+      isValid = false;
+    } else if (val.trim() && Number(val) <= 0) {
+      setArrErr((prev) => ({
+        ...prev,
+        priceSale: "Giá Sale không được bé hơn 1%.",
+      }));
+      isValid = false;
+    } else {
+      setArrErr((prev) => ({
+        ...prev,
+        priceSale: "",
+      }));
+      isValid = true;
+    }
 
     setIsSuccess((prev) => ({ ...prev, priceSale: isValid }));
   };
@@ -127,6 +188,12 @@ export default function SectionAddProduct({
     setQuantity(val);
     if (!val) {
       setArrErr((prev) => ({ ...prev, quantity: "Không được để trống." }));
+      setIsSuccess((prev) => ({ ...prev, quantity: false }));
+    } else if (Number(val) < 1) {
+      setArrErr((prev) => ({
+        ...prev,
+        quantity: "Số lượng không được bé hơn 1.",
+      }));
       setIsSuccess((prev) => ({ ...prev, quantity: false }));
     } else {
       setArrErr((prev) => ({ ...prev, quantity: "" }));
@@ -242,28 +309,43 @@ export default function SectionAddProduct({
         name: "",
         code: "",
         price: "",
-        err: { name: "", code: "", price: "" },
-        success: { name: false, code: false, price: false },
+        quantity: "",
+        hinh_bien_the: undefined,
+        err: { name: "", code: "", price: "", quantity: "", hinh_bien_the: "" },
+        success: {
+          name: false,
+          code: false,
+          price: false,
+          quantity: false,
+          hinh_bien_the: false,
+        },
       },
     ]);
   };
 
   const handleValidatorVariantAll = (
     id: number,
-    field: "code" | "price" | "name",
-    val: string
+    field: "code" | "price" | "name" | "quantity" | "hinh_bien_the",
+    val: string | File | undefined
   ) => {
     setVariants((prev) =>
       prev.map((v) => {
         if (Number(v.id) !== Number(id)) return v;
-
         let isValid = false;
         let errMsg = "";
-
-        if (field === "code" || field === "name") {
-          isValid = validatorString(val, (err) => (errMsg = err));
+        if (field === "name") {
+          isValid = validatorString(val as string, (err) => (errMsg = err));
         } else if (field === "price") {
-          isValid = validatorPrice(val, (err) => (errMsg = err));
+          isValid = validatorPrice(val as string, (err) => (errMsg = err));
+        } else if (field === "quantity") {
+          if (Number(val) < 1) {
+            isValid = false;
+            errMsg = "Số lượng phải lớn hơn 1.";
+          } else {
+            isValid = true;
+            errMsg = "";
+          }
+        } else if (field === "hinh_bien_the") {
         }
         return {
           ...v,
@@ -281,7 +363,7 @@ export default function SectionAddProduct({
   };
 
   //   handle main
-  const handleAddproductSeller = () => {
+  const handleAddproductSeller = async () => {
     // call lần cuối
     handleNameProduct(nameProduct);
     handlePrice(price);
@@ -293,41 +375,103 @@ export default function SectionAddProduct({
     handleTrademark(trademark);
     // handleValidatorAttribute;
     handleCategories(categories);
+    // handleCode(code);
     // handleValidatorVariantAll;
-
     if (
-      !isSuccess.nameProduct &&
-      !isSuccess.price &&
-      !isSuccess.priceSale &&
-      !isSuccess.quantity &&
-      !isSuccess.dvt &&
-      !isSuccess.origin &&
-      !isSuccess.dvctn &&
-      !isSuccess.trademark &&
+      !isSuccess.nameProduct ||
+      !isSuccess.price ||
+      !isSuccess.priceSale ||
+      !isSuccess.quantity ||
+      !isSuccess.dvt ||
+      !isSuccess.origin ||
+      !isSuccess.dvctn ||
+      !isSuccess.trademark ||
       !isSuccess.categories
-    )
+      // !isSuccess.code
+    ) {
+      toast.warning("Không đủ thông tin sản phẩm");
       return;
-
+    }
     const thuoc_tinh = attributes.map((item) => ({
-      id: item.id,
+      id_tt: item.id,
       value: item.value,
     }));
+
+    const bien_the = variants.map((item) => ({
+      so_luong: item.quantity,
+      ten_bien_the: item.name,
+      code: item.code,
+      gia: item.price,
+    }));
     //
-    const dataPost = {
-      ten_sp: nameProduct,
-      gia: price,
-      sale: priceSale,
-      so_luong: quantity,
-      xuat_xu: origin,
-      dvctn: dvctn,
-      dvt: dvt,
-      mo_ta: desc,
-      an_hien: statusPrd,
-      id_dm: categories,
-      id_th: trademark,
-      thuoc_tinh: thuoc_tinh,
-    };
-    console.log(dataPost);
+    // const dataPost = {
+    //   ten_sp: nameProduct,
+    //   gia: price,
+    //   sale: priceSale,
+    //   so_luong: quantity,
+    //   xuat_xu: origin,
+    //   dvctn: dvctn,
+    //   dvt: dvt,
+    //   mo_ta: desc,
+    //   an_hien: statusPrd,
+    //   id_dm: categories,
+    //   id_th: trademark,
+    //   thuoc_tinh: thuoc_tinh,
+    //   bien_the: variants,
+    // };
+    // console.log(dataPost);
+
+    const formData = new FormData();
+    formData.append("ten_sp", nameProduct);
+    formData.append("code", code);
+    formData.append("gia", price);
+    formData.append("sale", priceSale);
+    filesImg.forEach((img) => {
+      formData.append("hinh_sp", img);
+    });
+    formData.append("so_luong", quantity);
+    formData.append("xuat_xu", origin);
+    formData.append("dvctn", dvctn);
+    formData.append("dvt", dvt);
+    formData.append("mo_ta", desc);
+    if (statusPrd) formData.append("an_hien", statusPrd);
+    if (categories) formData.append("id_dm", categories);
+    if (trademark) formData.append("id_th", trademark);
+    formData.append("thuoc_tinh", JSON.stringify(thuoc_tinh));
+    formData.append("bien_the", JSON.stringify(bien_the));
+    variants.forEach((item, i) => {
+      formData.append(
+        `hinh_bien_the_${i}`,
+        item.hinh_bien_the ? item.hinh_bien_the : ""
+      );
+    });
+    console.log(variants);
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+    try {
+      const res = await productServices.addProductSeller(formData);
+      console.log(res.data);
+      if (!res.success) return;
+      toast.success("Thêm sản phẩm thành công.");
+    } catch (err) {
+      console.log(err);
+      const error = err as ApiError;
+      if (error.status === 409 || error.status == 400) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã xảy ra lỗi xin vui lòng thử lại sau!");
+      }
+    }
+  };
+  const handleCloseImgVariant = (id: number) => {
+    setVariants((prev) => {
+      return prev.map((item) => {
+        if (item.id !== id) return item;
+        return { ...item, hinh_bien_the: undefined };
+      });
+    });
+    // console.log(variants);
   };
 
   return (
@@ -413,6 +557,22 @@ export default function SectionAddProduct({
                 )}
               </div>
             </div>
+            <div className="group--block flex-y-center gap-x-3">
+              <label htmlFor="" className="text-sm text-neutral-700 w-[130px]">
+                Code
+                {/* <span className="text-red-600">*</span> */}
+              </label>
+              <div className="flex-1">
+                <input
+                  type="text"
+                  className="style-inp-1 w-full"
+                  onChange={(e) => handleCode(e.target.value)}
+                />
+                {arrErr.code && (
+                  <span className={clsx("err--form")}>{arrErr.code}</span>
+                )}
+              </div>
+            </div>
           </div>
           {/*  */}
           {/* block form group */}
@@ -424,7 +584,7 @@ export default function SectionAddProduct({
               </label>
               <div className="flex-1">
                 <input
-                  type="text"
+                  type="number"
                   className="style-inp-1 w-full"
                   onChange={(e) => handlePrice(e.target.value)}
                 />
@@ -440,10 +600,15 @@ export default function SectionAddProduct({
               </label>
               <div className="flex-1">
                 <input
-                  type="text"
+                  type="number"
                   className="style-inp-1 w-full"
                   onChange={(e) => handlePriceSale(e.target.value)}
                 />
+                {previewPriceSale > 0 && (
+                  <span className="inline-block mt-2 text-sm text-neutral-500">
+                    Giá đã trừ đi sale {formatMoney(previewPriceSale)}
+                  </span>
+                )}
                 {arrErr.priceSale && (
                   <span className={clsx("err--form")}>{arrErr.priceSale}</span>
                 )}
@@ -457,9 +622,10 @@ export default function SectionAddProduct({
               <div className="flex-1">
                 <input
                   type="number"
-                  className="style-inp-1 w-full"
+                  className="style-inp-1 w-ful"
                   onChange={(e) => handleQuantity(e.target.value)}
                   defaultValue={quantity}
+                  min={1}
                 />
                 {arrErr.quantity && (
                   <span className={clsx("err--form")}>{arrErr.quantity}</span>
@@ -695,7 +861,7 @@ export default function SectionAddProduct({
                           className="text-sm text-neutral-700 w-[130px]"
                         >
                           Code
-                          <span className="text-red-600">*</span>
+                          {/* <span className="text-red-600">*</span> */}
                         </label>
                         <div className="flex-1">
                           <input
@@ -741,6 +907,87 @@ export default function SectionAddProduct({
                               {item.err.price}
                             </span>
                           )}
+                        </div>
+                      </div>
+                      <div className="group--block flex-y-center gap-x-3">
+                        <label
+                          htmlFor=""
+                          className="text-sm text-neutral-700 w-[130px]"
+                        >
+                          Số lượng
+                          <span className="text-red-600">*</span>
+                        </label>
+                        <div className="flex-1">
+                          <input
+                            type="number"
+                            className="style-inp-1 w-full"
+                            min={1}
+                            defaultValue={1}
+                            onChange={(e) =>
+                              handleValidatorVariantAll(
+                                item.id,
+                                "quantity",
+                                e.target.value
+                              )
+                            }
+                          />
+                          {item.err.quantity && (
+                            <span className={clsx("err--form")}>
+                              {item.err.quantity}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="wrap--previewAddImg flex-y-center gap-x-3">
+                        {item && item.hinh_bien_the && (
+                          <div
+                            ref={fancyboxRef}
+                            className="imgPreview--list flex-y-center gap-x-3"
+                          >
+                            {/* {hinh_bien_the.map((img, i) => (
+                              
+                            ))} */}
+                            <div className="block--imgPreview relative">
+                              <button
+                                className="remove flex-center w-3.5 h-3.5 rounded-full bg-accentColor/70 absolute -right-1 -top-1 z-10 text-base text-white hover:bg-accentColor transition-all-300-ease"
+                                onClick={() => handleCloseImgVariant(item.id)}
+                              >
+                                <IoIosClose />
+                              </button>
+                              <a
+                                href={URL.createObjectURL(item.hinh_bien_the)}
+                                data-fancybox="previewImgProduce"
+                                className="img--preview inline-block w-20 h-20 rounded-md overflow-hidden"
+                              >
+                                <ImgLazy
+                                  src={URL.createObjectURL(item.hinh_bien_the)}
+                                  alt={""}
+                                  wrapperClassName="inline-block w-full h-full"
+                                  className="img-full"
+                                />
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                        <div className="block--inp ">
+                          <div className="block--choseImg relative flex-center w-20 h-20 overflow-hidden rounded-md border border-dashed border-accentColor cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              //   onChange={handleFileChange}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              onChange={(e) =>
+                                handleValidatorVariantAll(
+                                  item.id,
+                                  "hinh_bien_the",
+                                  e.target.files?.[0]
+                                )
+                              }
+                            />
+                            <span className="content text-xs text-accentColor">
+                              Thêm ảnh
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -8,10 +8,10 @@ export default function AsideMenu() {
           <div className="title text-base font-medium">Sản phẩm</div>
           <ul className="megaMenu--list flex flex-col gap-y-1 pl-3 mt-1">
             <li className="item text-sm">
-              <Link href="#!">Đăng sản phẩm</Link>
+              <Link href="/seller/product/new">Đăng sản phẩm</Link>
             </li>
             <li className="item text-sm">
-              <Link href="#!">Quản lý sản phẩm</Link>
+              <Link href="/seller/product">Quản lý sản phẩm</Link>
             </li>
           </ul>
         </li>
@@ -19,11 +19,11 @@ export default function AsideMenu() {
           <div className="title text-base font-medium">Đơn hàng</div>
           <ul className="megaMenu--list flex flex-col gap-y-1 pl-3 mt-1">
             <li className="item text-sm">
-              <Link href="#!">Đăng sản phẩm</Link>
+              <Link href="/seller/order">Quản lý đơn hàng</Link>
             </li>
-            <li className="item text-sm">
+            {/* <li className="item text-sm">
               <Link href="#!">Đăng sản phẩm</Link>
-            </li>
+            </li> */}
           </ul>
         </li>
       </ul>

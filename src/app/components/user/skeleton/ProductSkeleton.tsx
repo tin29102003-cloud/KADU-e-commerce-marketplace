@@ -45,27 +45,27 @@ export default function ProductSkeleton() {
           <Skeleton
             containerClassName="leading-none block mt-[6px] "
             className=""
-            width="80%"
+            width="60%"
           ></Skeleton>
         </div>
       </div>
 
       {/* product info secondary === */}
       <div className="product__infoBottom">
-        <Skeleton
+        {/* <Skeleton
           containerClassName="block "
           width="100%"
           height="20px"
-        ></Skeleton>
+        ></Skeleton> */}
         {/* rating */}
         <div className="rating flex items-center justify-between gap-x-2 gap-y-2 mt-3 flex-wrap">
           <Skeleton containerClassName="leading-none" width="145px"></Skeleton>
           <Skeleton containerClassName="leading-none" width="64px"></Skeleton>
         </div>
-        <Skeleton
+        {/* <Skeleton
           containerClassName="leading-none inline-block mt-3"
           width="70px"
-        ></Skeleton>
+        ></Skeleton> */}
       </div>
     </div>
   );

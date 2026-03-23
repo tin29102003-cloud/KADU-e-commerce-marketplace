@@ -1,6 +1,6 @@
 import type { EmblaOptionsType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
-import { ReactNode } from "react";
+import { ReactNode, ButtonHTMLAttributes } from "react";
 import type { AutoScrollType } from "embla-carousel-auto-scroll";
 
 export interface TypeImageCarousel {
@@ -14,6 +14,26 @@ export type ErrorRes = {
   status: number;
   message: string;
 };
+
+export interface ProductDetail extends TypeProduct {
+  shop: {
+    ten_shop: string;
+    id: 1;
+    hinh: string;
+  };
+  so_luong_dg: number;
+}
+
+export type TypeReason = {
+  status: number;
+  message: string;
+};
+
+export type BtnPrimaryProps = {
+  className?: string;
+  content?: string;
+  children?: ReactNode;
+} & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export interface TypeProduct {
   id: number;
@@ -37,6 +57,7 @@ export interface TypeProduct {
   sale: number;
   thanh_tien: number;
   is_active: boolean;
+  code: string;
   san_pham_bien_the: [
     {
       id: number;
@@ -56,6 +77,8 @@ export interface TypeProduct {
   thuong_hieu: { ten_th: string };
   updatedAt: string;
   xuat_xu: string;
+  diem_tb_dg: number;
+  so_luong_dg: number;
 }
 
 export interface PropsEmbla {
@@ -145,7 +168,7 @@ export interface CheckoutResponse {
 }
 
 export interface TypeAddressItem {
-  id: number;
+  id?: number;
   ho_ten: string;
   dien_thoai: string;
   dia_chi: string;
@@ -173,3 +196,50 @@ export interface TypeMethodPayItem {
 // nối dây bảng sản phẩm với sản phẩm thuộc tính sai
 // xem lại dây nối bảng user với phản hồi tin tức
 // sai dây nối ở giỏ hàng và user 1-1
+
+export interface TypeOrderDetail {
+  id: number;
+  ma_dh: string;
+  id_user: number;
+  id_shop: number;
+  id_km: number | null;
+  id_pttt: number;
+  gia: number;
+  giam_gia: number;
+  phi_vc: number;
+  tam_tinh: number;
+  tong_tien: number;
+  trang_thai_dh: number;
+  trang_thai_thanh_toan: boolean;
+  ghi_chu: string;
+  dia_chi_gh: string;
+  dien_thoai: string;
+  ten_nguoi_nhan: string;
+  ly_do_huy: string | null;
+  ngay_hoan_thanh: string | null;
+  createdAt: string;
+  updatedAt: string;
+
+  chi_tiet_dh: {
+    id: number;
+    ten_sp: string;
+  }[];
+
+  pttt: {
+    code: string;
+    ten_pt: string;
+  };
+
+  shop: {
+    id: number;
+    ten_shop: string;
+    hinh: string | null;
+  };
+
+  voucher: {
+    code: string;
+    gia_tri_giam: number;
+    loai_km: number;
+    ten_km: string;
+  };
+}

@@ -38,7 +38,8 @@ export default function SlideProductDetail({
               <div key={i} className="banner--main__item flex-none w-full">
                 <Link href="#!" className="block h-full ratio-box ratio-1_1">
                   <ImgLazy
-                    src={"http://localhost:5000/" + banner.url}
+                    src={banner.url}
+                    connectHost={true}
                     alt="Dây nịt da siêu đẹp"
                     className="img-full"
                     wrapperClassName="ratio-box-img"

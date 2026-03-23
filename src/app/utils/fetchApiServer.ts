@@ -8,14 +8,14 @@ const fetchApiServer = async (
   endURL: string,
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" = "GET",
   data: any = {},
-  params: Record<string, any> = {}
+  params: Record<string, any> = {},
 ) => {
   try {
     const cookieHeader = (await cookies()).toString();
 
     const url = new URL(`${BASE_URL}${endURL}`);
     Object.entries(params).forEach(([k, v]) =>
-      url.searchParams.append(k, String(v))
+      url.searchParams.append(k, String(v)),
     );
 
     const res = await fetch(url.toString(), {

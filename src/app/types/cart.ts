@@ -8,6 +8,7 @@ export interface TypeProductCartItem extends TypeProduct {
   gia_tong: number;
   tiet_kiem: number;
   id_bt: number | null;
+  ten_bien_the: string;
 }
 
 export interface TypeCartItem {

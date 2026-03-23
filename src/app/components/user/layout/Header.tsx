@@ -49,13 +49,16 @@ export default function Header() {
           {/* seller nav   */}
           <ul className="seller flex items-center gap-x-1.5">
             <li className="text-sm ">
-              <Link href="#!" className="text-[#6B7280] font-medium">
+              <Link href="/seller" className="text-[#6B7280] font-medium">
                 Kênh người bán
               </Link>
             </li>
             <li className="h-4 border-l border-borderDeffault "></li>
             <li className="text-sm text-[#6B7280]">
-              <Link href="#!" className="text-accentColor font-medium">
+              <Link
+                href="/auth/register-seller"
+                className="text-accentColor font-medium"
+              >
                 Trở thành người bán
               </Link>
             </li>
@@ -98,7 +101,7 @@ export default function Header() {
           <div className="header--logo flex-y-center col-span-2 uppercase text-[28px] font-semibold">
             <Link href="/">
               <ImgLazy
-                src="./images/logo-datn.png"
+                src="/images/logo-datn.png"
                 alt="Logo Kadu"
                 className="max-w-[75%]"
               />
@@ -115,21 +118,21 @@ export default function Header() {
               <li className="item">
                 <Link href="/wishlist" className="relative">
                   <CiHeart className="w-8 h-8" />
-                  <div className="count--cart flex-center absolute right-[-4px] top-0 w-4 h-4 rounded-full bg-accentColor text-[11px] text-white">
+                  {/* <div className="count--cart flex-center absolute right-[-4px] top-0 w-4 h-4 rounded-full bg-accentColor text-[11px] text-white">
                     0
-                  </div>
+                  </div> */}
                 </Link>
               </li>
               <li className="item">
                 <Link href="/cart" className="relative">
                   <CiShoppingCart className="w-8 h-8" />
-                  <div className="count--cart flex-center absolute right-[-4px] top-0 w-4 h-4 rounded-full bg-accentColor text-[11px] text-white">
+                  {/* <div className="count--cart flex-center absolute right-[-4px] top-0 w-4 h-4 rounded-full bg-accentColor text-[11px] text-white">
                     0
-                  </div>
+                  </div> */}
                 </Link>
               </li>
               <li className="item">
-                <Link href="/user" className="relative">
+                <Link href="/user/account/profile" className="relative">
                   <CiUser className="w-8 h-8" />
                 </Link>
               </li>

@@ -12,12 +12,27 @@ import productServices from "@/app/services/productServices";
 import { TypeCartItem } from "@/app/types/cart";
 import MessageBlock from "@/app/components/user/MessageBlock";
 import cartServicesServer from "@/app/services/cartServices-server";
+import { TypeReason } from "@/app/types/type";
 
 export default async function Cart() {
   const result = await Promise.allSettled([cartServicesServer.getAll()]);
-  const [cartListRes] = result;
-  const cartList: TypeCartItem[] =
-    cartListRes.status === "fulfilled" ? cartListRes.value.data.data : null;
+  const [dataCartRes] = result;
+
+  let cartList: TypeCartItem[] | null = [];
+  const handleGetCart = () => {
+    if (dataCartRes.status === "fulfilled") {
+      cartList = dataCartRes.value.data.data;
+    } else {
+      const reason: TypeReason = dataCartRes.reason;
+      if (reason.status === 401) {
+        cartList = null;
+      } else {
+        cartList = null;
+        console.log(reason.message);
+      }
+    }
+  };
+  handleGetCart();
   return (
     <>
       {/* cart main  */}
@@ -32,10 +47,9 @@ export default async function Cart() {
       </section>
       {/* action */}
 
-      {/*   */}
-      <section className="section--cartProductYouMightLike">
+      {/* <section className="section--cartProductYouMightLike">
         <div className="container"></div>
-      </section>
+      </section> */}
     </>
   );
 }

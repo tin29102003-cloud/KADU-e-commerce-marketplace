@@ -24,15 +24,17 @@ import { formatMoney } from "@/app/utils/helper";
 export default function Product({
   product,
   className,
+  sale,
 }: {
   product: TypeProduct;
   className?: string;
+  sale?: boolean;
 }) {
   const handleLoveProduct = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const btn = e.currentTarget as HTMLButtonElement;
     const id_sp = Number(btn.dataset.id);
     if (!id_sp) {
-      toast.error("Có lỗi xảy ra thêm.");
+      toast.error("Có lỗi xảy ra thêm!");
       return;
     }
     try {
@@ -131,11 +133,11 @@ export default function Product({
       </div>
       {/* product info secondary === */}
       <div className="product__infoBottom">
-        {product.sale === 1 && (
+        {sale && (
           <div className="sale--progress">
             <div className="sale--progress__info flex items-end justify-between">
               <div className="sold-count text-xs font-medium text-[#5F5F5F]">
-                Đã bán: {}
+                Đã bán:
               </div>
               <div className="percentage text-xs font-medium">55%</div>
             </div>
@@ -151,10 +153,12 @@ export default function Product({
           <div className="flex items-center gap-x-3 flex-wrap">
             <div className="rating--scoreBox inline-flex items-center gap-x-1 p-[3px] rounded-[6px] border border-[#FFF1C5] bg-[#FFF8E4]">
               <FaStar className="w-[14px] h-[14px] fill-[#FFC205]" />
-              <span className="text-xs text-[#5F5F5F] font-medium ">4.5</span>
+              <span className="text-xs text-[#5F5F5F] font-medium ">
+                {product.diem_tb_dg}
+              </span>
             </div>
             <span className="rating--count text-xs text-[#949494]">
-              (1.4k đánh giá)
+              ({product.so_luong_dg} đánh giá)
             </span>
           </div>
           {/*  */}
@@ -172,10 +176,10 @@ export default function Product({
         </div> */}
 
         {/* location */}
-        <div className="location flex items-center gap-x-[6px] mt-3 ml-[-3px]">
+        {/* <div className="location flex items-center gap-x-[6px] mt-3 ml-[-3px]">
           <CiLocationOn className="w-[18px] h-[18px] fill-[#949494]" />
           <span className="text-xs text-[#949494] capitalize">tây ninh</span>
-        </div>
+        </div> */}
       </div>
     </li>
   );

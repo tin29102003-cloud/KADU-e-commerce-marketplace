@@ -20,6 +20,7 @@ import BtnPrimary from "@/app/components/user/button/BtnPrimary";
 import { formatMoney } from "@/app/utils/helper";
 import cartServices from "@/app/services/cartServices";
 import { toast } from "react-toastify";
+import MessageBlock from "@/app/components/user/MessageBlock";
 
 export default function CartBlock({ cartList }: { cartList: TypeCartItem[] }) {
   const router = useRouter();
@@ -98,7 +99,6 @@ export default function CartBlock({ cartList }: { cartList: TypeCartItem[] }) {
             so_luong: Number(prd.so_luong),
             id_sp: prd.id_sp,
           }));
-
       sessionStorage.setItem("dataPay", JSON.stringify(dataSet));
       setTimeout(() => {
         router.push("pay");
@@ -108,9 +108,14 @@ export default function CartBlock({ cartList }: { cartList: TypeCartItem[] }) {
       toast.error("Có lỗi xãy ra khi thanh toán!");
     }
   };
-  return (
-    <>
-      {listCartItem ? (
+
+  if (listCartItem === null)
+    return <MessageBlock content="Vui lòng đăng nhập dể xem giỏ hàng." />;
+  if (listCartItem !== null && listCartItem.length === 0)
+    return <MessageBlock content="Hiện không có sản phẩm trong giỏ." />;
+  if (listCartItem !== null && listCartItem.length > 0) {
+    return (
+      <>
         <ul className="itemCart--list flex flex-col gap-y-3 mt-3">
           <div className="cart--header p-[10px] rounded-lg shadow-[0_0_4px_1px_rgba(0,0,0,0.1)] mt-base">
             <div className="row items-center">
@@ -192,77 +197,88 @@ export default function CartBlock({ cartList }: { cartList: TypeCartItem[] }) {
             </li>
           ))}
         </ul>
-      ) : (
-        <ErrorBlock
-          desc="Đã xãy ra lỗi vui lòng thử lại "
-          className="mt-base"
-        />
-      )}
 
-      <div className="cartAction--fixed fixed bottom-0 left-0 z-10 w-full bg-white shadow-[0_-5px_6px_rgba(0,0,0,0.07)]">
-        <div className="container">
-          <div className="cartAction--discCode row">
-            <div className="col-7"></div>
-            <div className="col-5 flex-between-center py-3">
-              <div className="flex-y-center gap-x-2">
-                <CiDiscount1 className="text-2xl" />
-                <span className="text-sm">DATN Voucher</span>
-              </div>
-              <span className="text-sm text-accentColor font-medium cursor-pointer select-none">
-                Chọn hoặc nhập mã{" "}
-              </span>
-            </div>
-          </div>
-          <div className="cartAction--main flex-between-center">
-            <div className="flex-y-center gap-x-5">
-              <div className="flex-y-center gap-x-2">
-                <input
-                  type="checkbox"
-                  id="select--allCart2"
-                  className="w-[14px] h-[14px] border-[#E0E0E0]"
-                />
-                <label
-                  htmlFor="select--allCart2"
-                  className="text-base select-none cursor-pointer"
-                >
-                  Chọn tất cả{" "}
-                  <span className="font-medium">({countProduct})</span>
-                </label>
-              </div>
-              <span className="text-base text-[#EF4444] font-mediums">Xóa</span>
-            </div>
-            <div className="sumCart flex gap-x-5 items-start">
-              <div className="flex gap-x-3">
-                <div className="text-base">
-                  Tổng cộng
-                  <span className="font-medium ">
-                    &nbsp;({countPrdSelect} sản phẩm)
-                  </span>
+        {/* action cart */}
+        <div className="cartAction--fixed fixed bottom-0 left-0 z-10 w-full bg-white shadow-[0_-5px_6px_rgba(0,0,0,0.07)] py-5">
+          <div className="container">
+            {/* <div className="cartAction--discCode row">
+              <div className="col-7"></div>
+              <div className="col-5 flex-between-center py-3">
+                <div className="flex-y-center gap-x-2">
+                  <CiDiscount1 className="text-2xl" />
+                  <span className="text-sm">DATN Voucher</span>
                 </div>
-                <div className="sumCart--main">
-                  <span className="sumCart--main__num text-lg text-accentColor font-semibold ">
-                    {totalPrdSelect
-                      ? formatMoney(totalPrdSelect)
-                      : formatMoney(0)}
-                  </span>
-                  <div className="text-[13px] mt-2">
-                    Tiết kiệm
-                    <span className="text-accentColor font-medium ml-2">
-                      {" "}
-                      {totalSave ? formatMoney(totalSave) : formatMoney(0)}
+                <span className="text-sm text-accentColor font-medium cursor-pointer select-none">
+                  Chọn hoặc nhập mã{" "}
+                </span>
+              </div>
+            </div> */}
+            <div className="cartAction--main flex justify-end">
+              {/* <div className="flex-y-center gap-x-5">
+                <div className="flex-y-center gap-x-2">
+                  <input
+                    type="checkbox"
+                    id="select--allCart2"
+                    className="w-[14px] h-[14px] border-[#E0E0E0]"
+                  />
+                  <label
+                    htmlFor="select--allCart2"
+                    className="text-base select-none cursor-pointer"
+                  >
+                    Chọn tất cả{" "}
+                    <span className="font-medium">({countProduct})</span>
+                  </label>
+                </div>
+                <span className="text-base text-[#EF4444] font-mediums">
+                  Xóa
+                </span>
+              </div> */}
+              <div className="sumCart flex gap-x-5 items-start">
+                <div className="flex gap-x-3">
+                  <div className="text-base">
+                    Tổng cộng
+                    <span className="font-medium ">
+                      &nbsp;({countPrdSelect} sản phẩm)
                     </span>
                   </div>
+                  <div className="sumCart--main">
+                    <span className="sumCart--main__num text-lg text-accentColor font-semibold ">
+                      {totalPrdSelect
+                        ? formatMoney(totalPrdSelect)
+                        : formatMoney(0)}
+                    </span>
+                    <div className="text-[13px] mt-2">
+                      Tiết kiệm
+                      <span className="text-accentColor font-medium ml-2">
+                        {" "}
+                        {totalSave ? formatMoney(totalSave) : formatMoney(0)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+                <BtnPrimary
+                  content="Thanh toán"
+                  className="p-[12px_60px]"
+                  onClick={handlePay}
+                />
               </div>
-              <BtnPrimary
-                content="Thanh toán"
-                className="p-[12px_60px]"
-                onClick={handlePay}
-              />
             </div>
           </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  }
+  // return (
+  //   <>
+  //     {/* {listCartItem ? (
+
+  //     ) : (
+  //       <ErrorBlock
+  //         desc="Đã xãy ra lỗi vui lòng thử lại "
+  //         className="mt-base"
+  //       />
+  //     )} */}
+
+  //   </>
+  // );
 }

@@ -30,7 +30,10 @@ export default function HeaderSearch() {
       // handle Search
       (async () => {
         try {
-          const res = await productServices.searchProductHeader(keyword);
+          const res = await productServices.searchProductHeader(
+            keyword,
+            "10000"
+          );
           if (!res.success) return;
           setDataSearch(res.data.result.data);
         } catch (err) {
@@ -94,7 +97,10 @@ export default function HeaderSearch() {
                 {dataSearch.slice(0, 4).map((item) => (
                   <li key={item.id} className="item flex-y-center gap-x-3">
                     <div className="block--img flex-[0_0_12%]">
-                      <Link href="#!" className="block w-full h-full">
+                      <Link
+                        href={`/${item.slug}`}
+                        className="block w-full h-full"
+                      >
                         <ImgLazy
                           src="/images/product/product-2.png"
                           alt="Hình sản phẩm search"
@@ -105,7 +111,7 @@ export default function HeaderSearch() {
                     </div>
                     <div className="block--info">
                       <div className="info__name text-sm font-medium">
-                        <Link href="#!" className=" line-clamp-2">
+                        <Link href={`/${item.slug}`} className=" line-clamp-2">
                           {item.ten_sp}
                         </Link>
                       </div>
@@ -125,11 +131,13 @@ export default function HeaderSearch() {
                   </li>
                 ))}
               </ul>
-              <BtnPrimary
-                content={`Xem thêm ${dataSearch.length - 4} kết quả`}
-                onClick={handleSearchNextPage}
-                className="w-full text-center mt-3"
-              />
+              {dataSearch.length > 4 && (
+                <BtnPrimary
+                  content={`Xem thêm ${dataSearch.length - 4} kết quả`}
+                  onClick={handleSearchNextPage}
+                  className="w-full text-center mt-3"
+                />
+              )}
             </>
           )}
           {!loading && dataSearch.length === 0 && (

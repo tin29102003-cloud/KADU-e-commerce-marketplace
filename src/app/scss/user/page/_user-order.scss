@@ -1,0 +1,21 @@
+.section--user {
+  .order {
+    .order--nav {
+      & > ul {
+        & > li {
+          & > a {
+            @apply transition-all-300-ease;
+            &:hover {
+              @apply border-accentColor text-accentColor;
+            }
+          }
+          &.active {
+            & > a {
+              @apply border-accentColor text-accentColor;
+            }
+          }
+        }
+      }
+    }
+  }
+}

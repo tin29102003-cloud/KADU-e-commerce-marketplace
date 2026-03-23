@@ -34,6 +34,7 @@ import { JSX } from "react";
 import productServicesServer from "../services/productServices-server";
 import categoryServicesServer from "../services/categoryServices-server";
 import MessageBlock from "../components/user/MessageBlock";
+import SectionAllProductSuggest from "./SectionAllProductSuggest";
 
 export default async function Home() {
   const result = await Promise.allSettled([
@@ -192,9 +193,12 @@ export default async function Home() {
               </div> */}
             </div>
             {/* list product */}
-            {listProductSale === null && <ErrorBlock />}
+            {listProductSale === null && <ErrorBlock className="mt-base" />}
             {listProductSale !== null && listProductSale.length === 0 && (
-              <MessageBlock content="Hiện không có sản phẩm sale!" />
+              <MessageBlock
+                content="Hiện không có sản phẩm sale!"
+                className="mt-base"
+              />
             )}
             {listProductSale && listProductSale.length > 0 && (
               <div className="sale--listProduct mt-base">
@@ -276,29 +280,10 @@ export default async function Home() {
       </section>
 
       {/* slide logo */}
-      <SlideLogo />
+      {/* <SlideLogo /> */}
 
       {/* section product suggest */}
-      <section className="section--suggest section-py">
-        <div className="container">
-          <div className="block--suggest">
-            <div className="suggest--top flex-between">
-              <TitleSection title="Gợi ý hôm nay" />
-              <BtnSeeAll />
-            </div>
-            <ul className="suggest--list mt-base grid-col5">
-              {listProduct &&
-                listProduct.length > 0 &&
-                listProduct.map((prd: TypeProduct) => (
-                  <Product product={prd} />
-                ))}
-            </ul>
-            <div className="flex-x-center mt-base">
-              <BtnSecondary />
-            </div>
-          </div>
-        </div>
-      </section>
+      <SectionAllProductSuggest />
     </>
   );
 }

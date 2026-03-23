@@ -25,11 +25,10 @@ export default async function Pay() {
   ]);
 
   const [defaultDataAddress, voucherListRes, listMethodPayRes] = result;
-  const dataAddress: TypeAddressItem[] =
+  const addressDefault =
     defaultDataAddress.status === "fulfilled"
-      ? defaultDataAddress.value.data.result.data
+      ? defaultDataAddress.value.data.data
       : null;
-
   const voucherList: TypePromoCode[] =
     voucherListRes.status === "fulfilled"
       ? voucherListRes.value.data.data
@@ -39,11 +38,9 @@ export default async function Pay() {
     listMethodPayRes.status === "fulfilled"
       ? listMethodPayRes.value.data.data
       : null;
-  console.log(listMethodPay);
-
   return (
     <SectionPay
-      dataAddress={dataAddress}
+      dataAddress={addressDefault}
       voucherList={voucherList}
       listMethodPay={listMethodPay}
     />

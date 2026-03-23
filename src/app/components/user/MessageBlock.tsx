@@ -10,7 +10,7 @@ export default function MessageBlock({
   return (
     <div
       className={clsx(
-        "message--block px-6 py-9 bg-primaryColor rounded-md border border-bd-primary text-lg font-medium text-center text-accentColor",
+        "message--block px-6 py-9 bg-primaryColor rounded-md border border-bd-primary text-lg font-medium text-center text-accentColor mt-base",
         className
       )}
     >

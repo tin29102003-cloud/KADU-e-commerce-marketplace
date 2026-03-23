@@ -1,3 +1,22 @@
 .no-result {
   @apply text-sm font-medium text-center text-accentColor;
 }
+footer {
+  clip-path: ellipse(160% 100% at 50% 100%);
+}
+@layer components {
+  .style-inp-1 {
+    @apply w-full border px-3 py-2 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500;
+  }
+  .style-scroll-1 {
+    &::-webkit-scrollbar {
+      @apply w-1;
+    }
+    &::-webkit-scrollbar-thumb {
+      @apply bg-accentColor rounded-full;
+    }
+    &::-webkit-scrollbar-track {
+      @apply bg-neutral-100;
+    }
+  }
+}

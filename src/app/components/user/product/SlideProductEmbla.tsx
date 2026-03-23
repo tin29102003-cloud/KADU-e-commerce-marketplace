@@ -11,10 +11,12 @@ export default function SlideProductEmbla({
   listProduct,
   slidesPerViews = 5,
   className,
+  sale,
 }: {
   listProduct: TypeProduct[] | null;
   slidesPerViews?: 4 | 5;
   className?: string;
+  sale?: boolean;
 }) {
   if (!listProduct) return <ErrorBlock desc="Lỗi không lấy được sản phẩm" />;
   if (listProduct.length === 0) return <ErrorBlock desc="Không có sản phẩm" />;
@@ -37,6 +39,7 @@ export default function SlideProductEmbla({
             key={prd.id}
             product={prd}
             className={`embla--col${slidesPerViews}__item select-none`}
+            // sale={sale}
           />
         ))}
       </ul>

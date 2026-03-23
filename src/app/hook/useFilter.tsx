@@ -9,7 +9,7 @@ export const useFilter = () => {
     Object.entries(filters).forEach(([key, value]) => {
       params.set(key, String(value));
     });
-    router.push(`?${params.toString()}`, { scroll: false });
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
   const removeFilter = (key: string[]) => {
     const params = new URLSearchParams(searchParams.toString());

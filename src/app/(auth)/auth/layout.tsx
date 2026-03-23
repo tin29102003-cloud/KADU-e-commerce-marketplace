@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${beVietnamPro.variable} antialiased`}>
-        <main className="w-full h-[100dvh] relative overflow-hidden bg-[#4E9BFF] py-10">
+        <main className="w-full h-[100dvh] relative overflow-hidden bg-[#4E9BFF] py-10 -mb-10">
           {children}
           <ToastContainer
             position="top-right"
@@ -43,7 +43,6 @@ export default function RootLayout({
           <div className="bg--authIcon icon1"></div>
           <div className="bg--authIcon icon2"></div>
         </main>
-
         <Footer />
       </body>
     </html>

@@ -19,7 +19,12 @@ export default function CartCheckoutItem({
     <li className="cart--prd flex gap-x-3 py-3 border-b border-bd-primary last:border-none">
       <div className="cart--thumb">
         <Link href="#!" className="block w-20 h-20 rounded-lg overflow-hidden ">
-          <ImgLazy src={product.img} alt="sản phẩm 1" className="img-full" />
+          <ImgLazy
+            src={product.img}
+            alt="sản phẩm 1"
+            className="img-full"
+            connectHost={true}
+          />
         </Link>
       </div>
       <div className="cart--info flex flex-col">

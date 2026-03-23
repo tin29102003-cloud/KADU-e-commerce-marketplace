@@ -1,12 +1,5 @@
 import clsx from "clsx";
-import React, { ReactNode, ButtonHTMLAttributes } from "react";
-
-type BtnPrimaryProps = {
-  className?: string;
-  content?: string;
-  children?: ReactNode;
-} & ButtonHTMLAttributes<HTMLButtonElement>;
-
+import { BtnPrimaryProps } from "@/app/types/type";
 export default function BtnPrimary({
   className,
   content = "Xem thêm",

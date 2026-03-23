@@ -8,12 +8,14 @@ export default function SelectClient({
   placeholder,
   defaultOption,
   onChange,
+  isDisabled,
 }: {
   options: { value?: string; label?: string }[];
   className?: string;
   placeholder?: string;
   defaultOption?: { value?: string; label?: string };
   onChange?: (value: { value?: string; label?: string } | null) => void;
+  isDisabled?: boolean;
 }) {
   return (
     <Select
@@ -22,6 +24,7 @@ export default function SelectClient({
       placeholder={placeholder}
       onChange={onChange}
       defaultValue={defaultOption}
+      isDisabled={isDisabled}
     />
   );
 }

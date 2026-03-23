@@ -18,7 +18,7 @@ export default function ImgLazy({
   className?: string;
   effect?: "blur" | "opacity" | "black-and-white";
   wrapperClassName?: string;
-  connectHost?: boolean;
+  connectHost?: boolean | (() => boolean);
 }) {
   return (
     <LazyLoadImage

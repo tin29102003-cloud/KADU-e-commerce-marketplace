@@ -14,7 +14,7 @@ export default function ErrorBlock({
   className?: string;
 }) {
   return (
-    <section className={clsx("section--errorBlock", className)}>
+    <section className={clsx("section--errorBlock mt-base", className)}>
       <div className="error flex flex-col items-center bg-[#f5f5f5] p-[20px_16px]">
         {/* icon */}
         <div className="error__icon w-16 h-16 rounded-full bg-[#FFD5D3] flex-center ">

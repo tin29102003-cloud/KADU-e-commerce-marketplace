@@ -49,7 +49,6 @@ export default function SlideEmbla({
     };
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
-
     onSelect();
 
     // clean event
@@ -91,14 +90,3 @@ export default function SlideEmbla({
     </div>
   );
 }
-
-// <BtnCircle
-//                 rotateIcon="prev"
-//                 onClick={() => emblaApiState?.scrollPrev()}
-//                 className={`${!canScrollPrev && "hidden pointer-events-none"}`}
-//               />
-//               <BtnCircle
-//                 rotateIcon="next"
-//                 onClick={() => emblaApiState?.scrollNext()}
-//                 className={`${!canScrollNext && "hidden pointer-events-none"}`}
-//               />

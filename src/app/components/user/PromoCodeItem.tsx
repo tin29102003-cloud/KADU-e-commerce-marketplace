@@ -13,7 +13,7 @@ export default function PromoCodeItem({ code }: { code: TypePromoCode }) {
     sessionStorage.setItem("voucher_id", id);
   };
   return (
-    <li className="item p-[10px] rounded-lg border-[1.2px] border-accentColor">
+    <div className="item p-[10px] rounded-lg border-[1.2px] border-accentColor ">
       <div className="name text-[15px] text-textGrayDark font-medium ">
         {code.ten_km}
       </div>
@@ -30,6 +30,6 @@ export default function PromoCodeItem({ code }: { code: TypePromoCode }) {
           onClick={() => handleSaveVoucher(String(code.id))}
         />
       </div>
-    </li>
+    </div>
   );
 }

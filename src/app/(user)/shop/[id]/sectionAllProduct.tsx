@@ -1,6 +1,7 @@
 "use client";
 import ErrorBlock from "@/app/components/user/ErrorBlock";
 import MessageBlock from "@/app/components/user/MessageBlock";
+import PaginationPage from "@/app/components/user/PaginationPage";
 import Product from "@/app/components/user/product/Product";
 import TitleSection from "@/app/components/user/TitleSection";
 import { TypePagination } from "@/app/types/product";
@@ -18,12 +19,6 @@ export default function SectionAllProduct({
 }) {
   const router = useRouter();
   const searchParam = useSearchParams();
-
-  const handlePagination = (p: number) => {
-    const params = new URLSearchParams(searchParam.toString());
-    params.set("page", String(p));
-    router.push(`?${params.toString()}`, { scroll: false });
-  };
   return (
     <section className="section--allProduct section-py">
       <div className="container">
@@ -31,7 +26,7 @@ export default function SectionAllProduct({
           <TitleSection title="Tất cả sản phẩm" />
           {productList ? (
             productList && productList.length > 0 ? (
-              <ul className="allProduct-list grid-col4 mt-base">
+              <ul className="allProduct-list grid-col5 mt-base">
                 {productList
                   .filter((item) => Number(item.so_luong) > 0)
                   .map((p) => (
@@ -63,7 +58,8 @@ export default function SectionAllProduct({
           )} */}
 
           {/* pagination  */}
-          {pagination && Number(pagination.totalPages) > 1 && (
+          <PaginationPage pagination={pagination} />
+          {/* {pagination && Number(pagination.totalPages) > 1 && (
             <div className="flex-x-center mt-base">
               <div className="pagination flex-y-center gap-x-3 ">
                 <button className="pagination__prev">
@@ -96,7 +92,7 @@ export default function SectionAllProduct({
                 </button>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </section>

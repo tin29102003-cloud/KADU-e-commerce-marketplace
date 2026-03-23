@@ -19,11 +19,15 @@ const fetchApi = async (
   params = {}
 ) => {
   try {
+    const isFormData = data instanceof FormData;
     const res = await api({
       url: endURL,
       method,
       data,
       params,
+      headers: isFormData
+        ? { "Content-Type": "multipart/form-data" }
+        : undefined,
     });
     return { status: res.status, data: res.data, success: res.data.success };
   } catch (err) {
